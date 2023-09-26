@@ -21,7 +21,7 @@ namespace MTCG
 
         public override string ToString() 
         {
-            return Name + " - " + Description + "\nVon " + Region + " hat " + HealthPoints + " HP.";
+            return Name + " - " + Description + "\nDer Champion stammt aus der Region " + Region + " und hat " + HealthPoints + " HP.";
         }
     }
 }

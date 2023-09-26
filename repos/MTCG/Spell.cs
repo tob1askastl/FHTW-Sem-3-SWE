@@ -18,5 +18,10 @@ namespace MTCG
         {
 
         }
+
+        public override string ToString()
+        {
+            return Name + " - " + Description + "\nDer Spell stammt aus der Region " + Region + " und kostet " + ManaCost + " Mana.";
+        }
     }
 }
