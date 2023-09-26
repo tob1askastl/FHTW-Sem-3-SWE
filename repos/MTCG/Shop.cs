@@ -13,11 +13,17 @@ namespace MTCG
 
         public Shop()
         {
-            Champions = new List<Champion>();
+            Champions = ReadChampionsFromFile("champions.txt");
+            Spells = ReadSpellsFromFile("spells.txt");
+        }
+
+        private List<Champion> ReadChampionsFromFile(string path)
+        {
+            List<Champion> champions = new List<Champion>();
 
             try
             {
-                using (StreamReader sr = new StreamReader("champions.txt"))
+                using (StreamReader sr = new StreamReader(path))
                 {
                     string line;
 
@@ -34,16 +40,73 @@ namespace MTCG
 
                         Champion champion = new Champion(name, descr, region, hP);
 
-                        Champions.Add(champion); 
+                        champions.Add(champion);
                     }
                 }
             }
 
-            catch (Exception e)
+            catch (FileNotFoundException e)
             {
-                Console.WriteLine("Die Datei konnte nicht gelesen werden:");
-                Console.WriteLine(e.Message);
+                Console.WriteLine($"Datei {path} wurde nicht gefunden.");
             }
+
+            catch (IOException e)
+            {
+                Console.WriteLine($"Fehler beim Lesen der Datei {path}: {e.Message}");
+            }
+
+            catch (FormatException e)
+            {
+                Console.WriteLine($"Fehler beim Parsen der Datei {path}: {e.Message}");
+            }
+
+            return champions;
+        }
+
+        private List<Spell> ReadSpellsFromFile(string path)
+        {
+            List<Spell> spells = new List<Spell>();
+
+            try
+            {
+                using (StreamReader sr = new StreamReader(path))
+                {
+                    string line;
+
+                    while ((line = sr.ReadLine()) != null)
+                    {
+                        string[] parts = line.Split(';');
+
+                        string name = parts[0];
+                        string descr = parts[1];
+                        int manaCost = int.Parse(parts[2]);
+                        int regionValue = int.Parse(parts[3]);
+
+                        ERegion region = (ERegion)regionValue;
+
+                        Spell spell = new Spell(name, descr, manaCost, region);
+
+                        spells.Add(spell);
+                    }
+                }
+            }
+
+            catch (FileNotFoundException e)
+            {
+                Console.WriteLine($"Datei {path} wurde nicht gefunden.");
+            }
+
+            catch (IOException e)
+            {
+                Console.WriteLine($"Fehler beim Lesen der Datei {path}: {e.Message}");
+            }
+
+            catch (FormatException e)
+            {
+                Console.WriteLine($"Fehler beim Parsen der Datei {path}: {e.Message}");
+            }
+
+            return spells;
         }
 
         public Champion SelectRandomChampion()
@@ -60,6 +123,22 @@ namespace MTCG
             Champions.RemoveAt(randomIndex);
 
             return selectedChampion;
+        }
+
+        public Spell SelectRandomSpell()
+        {
+            if (Spells.Count == 0)
+            {
+                return null;
+            }
+
+            Random random = new Random();
+            int randomIndex = random.Next(0, Spells.Count);
+
+            Spell selectedSpell = Spells[randomIndex];
+            Spells.RemoveAt(randomIndex);
+
+            return selectedSpell;
         }
     }
 }

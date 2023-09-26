@@ -18,7 +18,7 @@
       </Path>
     </InheritanceLine>
     <TypeIdentifier>
-      <HashCode>AAAAAAAAQAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAAAAAAQAAAAAAEAAAAAAAAAIAAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Champion.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -33,7 +33,7 @@
       </Path>
     </InheritanceLine>
     <TypeIdentifier>
-      <HashCode>AAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAA=</HashCode>
+      <HashCode>AAAAAAIAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAgAAAAA=</HashCode>
       <FileName>Spell.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -59,9 +59,9 @@
     </ShowAsCollectionAssociation>
   </Class>
   <Class Name="MTCG.Shop">
-    <Position X="9.75" Y="0.5" Width="1.5" />
+    <Position X="9.75" Y="0.5" Width="3.25" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAEAAAAAAAAAAgAAAAAAIAAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAAACAAIAAAAAAAAIAAAAgAAAAAAIAAAAAAAAAQAAA=</HashCode>
       <FileName>Shop.cs</FileName>
     </TypeIdentifier>
     <ShowAsCollectionAssociation>
