@@ -1,0 +1,6 @@
+Threshs Lantern;Deal 3 damage to each enemy that was summoned this round.;4;0;
+Kalistas Black Spear;If an ally died this round, deal 4 damage to a unit.;2;0;
+Minimorph;Transform a unit into a 3 HP, 3 Dmg Mini-Minitee and Silence it.;6;1;
+Bouncing Bomb;Deal 2 to a unit or deal 1 to two enemies.;3;1;
+Trueshot Barrage;Deal 3 to an enemy or the enemy Nexus, 2 to another, and 1 to another.;7;2;
+Statikk Shock;Deal 1 to an enemy or the enemy Nexus, and 1 to another.;4;2;

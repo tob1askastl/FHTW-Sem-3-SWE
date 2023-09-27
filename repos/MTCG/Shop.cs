@@ -113,6 +113,7 @@ namespace MTCG
         {
             if (Champions.Count == 0)
             {
+                // Exception
                 return null;
             }
 

@@ -19,6 +19,7 @@ namespace MTCG
 
         }
 
+        // Stringbuilder, Interpolation
         public override string ToString() 
         {
             return Name + " - " + Description + "\nDer Champion stammt aus der Region " + Region + " und hat " + HealthPoints + " HP.";

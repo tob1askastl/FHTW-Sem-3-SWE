@@ -23,13 +23,13 @@
     </TypeIdentifier>
   </Class>
   <Class Name="MTCG.Spell">
-    <Position X="5.5" Y="4.25" Width="1.5" />
+    <Position X="5.5" Y="3.75" Width="1.5" />
     <InheritanceLine Type="MTCG.Card" ManuallyRouted="true" FixedToPoint="true">
       <Path>
         <Point X="4.625" Y="2.44" />
         <Point X="4.625" Y="3.267" />
         <Point X="6.25" Y="3.267" />
-        <Point X="6.25" Y="4.25" />
+        <Point X="6.25" Y="3.75" />
       </Path>
     </InheritanceLine>
     <TypeIdentifier>
