@@ -12,13 +12,4 @@
     <None Remove="spells.txt" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Resource Include="champions.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="spells.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
-  </ItemGroup>
-
 </Project>
