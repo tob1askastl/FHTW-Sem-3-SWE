@@ -84,7 +84,7 @@ namespace MTCG
 
                         ERegion region = (ERegion)regionValue;
 
-                        Spell spell = new Spell(name, descr, manaCost, region);
+                        Spell spell = new Spell(name, descr, region, manaCost);
 
                         spells.Add(spell);
                     }

@@ -9,7 +9,7 @@ namespace MTCG
     public class Spell : Card
     {
         public int ManaCost { get; private set; }
-        public Spell(string name, string descr, int mana, ERegion region) : base(name, descr, region)
+        public Spell(string name, string descr, ERegion region, int mana) : base(name, descr, region)
         {
             ManaCost = mana;
         }
