@@ -1,4 +1,5 @@
 ﻿using MTCG.Database;
+using MTCG.Request;
 using Npgsql;
 
 namespace MTCG
@@ -7,6 +8,21 @@ namespace MTCG
     {
         static void Main(string[] args)
         {
+            // Hier wird der HTTP-Server gestartet
+            HttpServer server = HttpServer.Server;
+            server.StartServer();
+
+            // Endlosschleife, um das Programm aktiv zu halten
+            Console.WriteLine("Press any key to stop the server...");
+            Console.ReadKey();
+
+            // Hier wird der HTTP-Server gestoppt, wenn eine Taste gedrückt wird
+            server.StopServer();
+        }
+    }
+}
+
+            /*
             string[] champlines = File.ReadAllLines("D:/FH/FHTW-Sem-3-SWE/repos/MTCG/bin/Debug/net7.0/champions.txt");
             string[] spelllines = File.ReadAllLines("D:/FH/FHTW-Sem-3-SWE/repos/MTCG/bin/Debug/net7.0/spells.txt");
 
@@ -83,7 +99,7 @@ namespace MTCG
             }            
         }
 
-        static Champion SelectRandomChampion(NpgsqlConnection connection)
+            static Champion SelectRandomChampion(NpgsqlConnection connection)
         {
             using (var command = new NpgsqlCommand("SELECT * FROM mtcg_champions ORDER BY RANDOM() LIMIT 1", connection))
             {
@@ -136,3 +152,4 @@ namespace MTCG
         }
     }
 }
+            */

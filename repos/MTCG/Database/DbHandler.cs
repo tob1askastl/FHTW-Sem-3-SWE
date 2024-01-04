@@ -12,9 +12,10 @@ namespace MTCG.Database
     {
         private readonly string _connectionString;
 
-        public DbHandler(string connectionString)
+        public DbHandler()
         {
-            _connectionString = connectionString;
+            DbConnector dbConnector = new DbConnector();
+            _connectionString = dbConnector.CreateConnection().ConnectionString;
         }
 
         public NpgsqlConnection GetConnection()
