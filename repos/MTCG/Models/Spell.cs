@@ -1,21 +1,13 @@
-﻿namespace MTCG
+﻿using System.Text;
+
+namespace MTCG
 {
     public class Spell : Card
     {
-        public int ManaCost { get; private set; }
-        public Spell(string name, string descr, ERegion region, int mana) : base(name, descr, region)
-        {
-            ManaCost = mana;
-        }
-
-        public void UseSpell()
+        public Spell(string name, ERegion region, int dmg, string card_type) : base(name, region, dmg, card_type)
         {
 
         }
 
-        public override string ToString()
-        {
-            return Name + " - " + Description + "\nDer Spell stammt aus der Region " + Region + " und kostet " + ManaCost + " Mana.";
-        }
     }
 }

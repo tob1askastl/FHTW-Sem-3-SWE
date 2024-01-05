@@ -1,9 +1,9 @@
-Kalista;In life, she was a general, a protector, a hero. But as flesh gave way, she was left with naught but the blazing fires of retribution, an undying spirit of vengeance.;0;50;
-Hecarim; Listen. Hear him ride. The trampling of hooves. The creak of armor, long-worn and rusted. The ghostly cries of soldiers, echoes of the past. The resounding silence that follows.;0;50;
-Thresh;Once the custodian of countless arcane secrets, Thresh was undone by a power greater than life or death, and now sustains himself by tormenting and breaking others with slow, excruciating inventiveness.;0;50;
-Teemo;Teemo scouts the world with boundless enthusiasm and a cheerful spirit. A yordle with an unwavering sense of morality, he takes pride in following the Bandle Scout's Code.;1;30;
-Heimerdinger;Heimerdinger is one of the most innovative and esteemed inventors Piltover has ever known. Relentless in his work to the point of neurotic obsession, he thrives on answering the universe's most impenetrable questions.;1;30;
-Lulu;The yordle mage Lulu is known for conjuring dreamlike illusions and fanciful creatures as she roams Runeterra with her fairy companion Pix.;1;30;
-Ezreal;A dashing adventurer, unknowingly gifted in the magical arts, Ezreal raids long-lost catacombs, tangles with ancient curses, and overcomes seemingly impossible odds with ease.;2;40;
-Jinx;A manic and impulsive criminal from Zaun, Jinx lives to wreak havoc without care for the consequences. With an arsenal of deadly weapons, she unleashes the loudest blasts and brightest explosions;2;40;
-Caitlyn;Caitlyn was always a dogged and thorough investigator, a quality that helped propel her fast through the ranks of Piltover enforcement.;2;40;
+Kalista;In life, she was a general, a protector, a hero. But as flesh gave way, she was left with naught but the blazing fires of retribution, an undying spirit of vengeance.;0;10;
+Hecarim; Listen. Hear him ride. The trampling of hooves. The creak of armor, long-worn and rusted. The ghostly cries of soldiers, echoes of the past. The resounding silence that follows.;0;15;
+Thresh;Once the custodian of countless arcane secrets, Thresh was undone by a power greater than life or death, and now sustains himself by tormenting and breaking others with slow, excruciating inventiveness.;0;20;
+Teemo;Teemo scouts the world with boundless enthusiasm and a cheerful spirit. A yordle with an unwavering sense of morality, he takes pride in following the Bandle Scout's Code.;1;10;
+Heimerdinger;Heimerdinger is one of the most innovative and esteemed inventors Piltover has ever known. Relentless in his work to the point of neurotic obsession, he thrives on answering the universe's most impenetrable questions.;1;15;
+Lulu;The yordle mage Lulu is known for conjuring dreamlike illusions and fanciful creatures as she roams Runeterra with her fairy companion Pix.;1;20;
+Ezreal;A dashing adventurer, unknowingly gifted in the magical arts, Ezreal raids long-lost catacombs, tangles with ancient curses, and overcomes seemingly impossible odds with ease.;2;10;
+Jinx;A manic and impulsive criminal from Zaun, Jinx lives to wreak havoc without care for the consequences. With an arsenal of deadly weapons, she unleashes the loudest blasts and brightest explosions;2;15;
+Caitlyn;Caitlyn was always a dogged and thorough investigator, a quality that helped propel her fast through the ranks of Piltover enforcement.;2;20;

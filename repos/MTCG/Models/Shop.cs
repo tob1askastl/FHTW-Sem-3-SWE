@@ -1,5 +1,6 @@
 ﻿namespace MTCG
 {
+    /*
     public class Shop
     {
         public List<Champion> Champions { get; set; }
@@ -135,5 +136,5 @@
 
             return selectedSpell;
         }
-    }
+    }*/
 }

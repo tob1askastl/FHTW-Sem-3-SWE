@@ -1,5 +1,6 @@
 ﻿using MTCG.Repositories;
 using System;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -10,6 +11,7 @@ namespace MTCG.Request
     {
         public static readonly int PORT = 10001;
         public static readonly string URL = "http://127.0.0.1:" + HttpServer.PORT;
+        public ConcurrentBag<string> TokensLoggedInUsers;
 
         private Socket listeningSocket;
 
@@ -29,7 +31,8 @@ namespace MTCG.Request
 
         public HttpServer()
         {
-            listeningSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);           
+            listeningSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);   
+            TokensLoggedInUsers = new ConcurrentBag<string>();
         }
 
         public void StartServer()
@@ -39,8 +42,9 @@ namespace MTCG.Request
 
             Console.WriteLine("Http Server is running");
 
-            Console.WriteLine("Users are being truncated...");
+            Console.WriteLine("Tables are being truncated...");
             UserRepository.TruncateTable();
+            CardRepository.TruncateTable();
 
             while (true)
             {
