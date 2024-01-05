@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace MTCG.Json
 {
-    public class UserRegistrationData
+    public class JsonUserData
     {
         public string Username { get; set; }
         public string Password { get; set; }
 
-        public UserRegistrationData() { }
+        public JsonUserData() { }
     }
 }

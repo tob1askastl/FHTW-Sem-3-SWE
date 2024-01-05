@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MTCG.Repositories;
+using System;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -37,6 +38,9 @@ namespace MTCG.Request
             listeningSocket.Listen(PORT);
 
             Console.WriteLine("Http Server is running");
+
+            Console.WriteLine("Users are being truncated...");
+            UserRepository.TruncateTable();
 
             while (true)
             {

@@ -50,37 +50,103 @@ namespace MTCG.Request
             }
 
             // Login-Pfad "/sessions"
-            if (method == "POST" && path == "/sessions")
+            else if (method == "POST" && path == "/sessions")
             {
                 HandleLogin(requestLines);
             }
-            
+
+            // 
+            else if (method == "POST" && path == "/")
+            {
+
+            }
+
+            // 
+            else if (method == "POST" && path == "/")
+            {
+
+            }
+
+            // 
+            else if (method == "POST" && path == "/")
+            {
+
+            }
+
+            // 
+            else if (method == "POST" && path == "/")
+            {
+
+            }
+
+            // 
+            else if (method == "POST" && path == "/")
+            {
+
+            }
+
+            // 
+            else if (method == "POST" && path == "/")
+            {
+
+            }
+
             client.Close();
         }
 
         private void HandleRegistration(string[] requestLines)
         {
-            string username;
-            string password;
-
             string requestBody = requestLines[requestLines.Length - 1].Trim();
 
-            UserRegistrationData userData = Newtonsoft.Json.JsonConvert.DeserializeObject<UserRegistrationData>(requestBody);
+            JsonUserData userData = Newtonsoft.Json.JsonConvert.DeserializeObject<JsonUserData>(requestBody);
 
             // Extrahiere Username und Password
-            username = userData.Username;
-            password = userData.Password;
+            string username = userData.Username;
+            string password = userData.Password;
 
             User newUser = new User(username, password);
             userRepository.AddUser(newUser);
 
-            string response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nRegistration successful";
+            Console.WriteLine($"Anmeldung erfolgreich für Benutzer '{username}'.");
+
+            string response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nRegistration successful\r\n";
             client.Send(Encoding.ASCII.GetBytes(response));
         }
 
         private void HandleLogin(string[] requestLines)
         {
+            string requestBody = requestLines[requestLines.Length - 1].Trim();
 
+            JsonUserData loginData = Newtonsoft.Json.JsonConvert.DeserializeObject<JsonUserData>(requestBody);
+
+            string username = loginData.Username;
+            string password = loginData.Password;
+
+            // Überprüfe die Anmeldeinformationen im UserRepository
+            if (userRepository.ValidateUserCredentials(username, password))
+            {
+                // Anmeldung erfolgreich
+                string token = GenerateToken(username);
+                userRepository.AddTokenToUser(username, token);
+
+                Console.WriteLine($"Anmeldung erfolgreich für Benutzer '{username}'.");
+                string response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nLogin successful\r\n";
+                client.Send(Encoding.ASCII.GetBytes(response));
+            }
+            else
+            {
+                // Anmeldung fehlgeschlagen
+                Console.WriteLine($"Anmeldung fehlgeschlagen für Benutzer '{username}'.");
+                string response = "HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\nLogin failed\r\n";
+                client.Send(Encoding.ASCII.GetBytes(response));
+            }
         }
+
+        private string GenerateToken(string username)
+        {
+            // Beispiel: Generiere ein einfaches Token mit dem Format "<username>-mtcgToken"
+            return $"{username}-mtcgToken";
+        }
+
     }
 }
