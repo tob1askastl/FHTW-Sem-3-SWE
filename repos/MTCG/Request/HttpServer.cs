@@ -21,7 +21,8 @@ namespace MTCG.Request
     {
         public static readonly int PORT = 10001;
         public static readonly string URL = "http://127.0.0.1:" + HttpServer.PORT;
-        public ConcurrentBag<string> TokensLoggedInUsers;
+        //public ConcurrentBag<string> TokensLoggedInUsers;
+        public ConcurrentDictionary<string, int> userTokens;
 
         private Socket listeningSocket;
 
@@ -43,8 +44,9 @@ namespace MTCG.Request
 
         public HttpServer()
         {
-            listeningSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);   
-            TokensLoggedInUsers = new ConcurrentBag<string>();
+            listeningSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            //TokensLoggedInUsers = new ConcurrentBag<string>();
+            userTokens = new ConcurrentDictionary<string, int>();
             dbHandler = new DbHandler();
         }
 
@@ -75,7 +77,7 @@ namespace MTCG.Request
 
                 using (NpgsqlCommand command = connection.CreateCommand())
                 {
-                    command.CommandText = "CREATE TABLE IF NOT EXISTS mtcg_users (id SERIAL PRIMARY KEY, username VARCHAR(255) UNIQUE NOT NULL, password VARCHAR(255) NOT NULL, bio VARCHAR(255), image VARCHAR(255), ritopoints INTEGER);";
+                    command.CommandText = "CREATE TABLE IF NOT EXISTS mtcg_users (id SERIAL PRIMARY KEY, username VARCHAR(255) UNIQUE NOT NULL, password VARCHAR(255) NOT NULL, bio VARCHAR(255), image VARCHAR(255), ritopoints INTEGER, elopoints INTEGER, victories INTEGER, defeats INTEGER, draws INTEGER);";
 
                     command.ExecuteNonQuery();
                 }

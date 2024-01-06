@@ -14,7 +14,6 @@ namespace MTCG.Repositories
     public class UserRepository
     {
         private readonly DbHandler _dbHandler;
-        private readonly Dictionary<string, string> userTokens = new Dictionary<string, string>();
 
         public UserRepository()
         {
@@ -34,12 +33,19 @@ namespace MTCG.Repositories
             {
                 _dbHandler.OpenConnection(connection);
 
-                string query = "INSERT INTO mtcg_users (username, password, ritopoints) VALUES (@Username, @Password, 20)";
+                string query = "INSERT INTO mtcg_users (username, password, bio, image, ritopoints, elopoints, victories, defeats, draws) VALUES (@Username, @Password, @Bio, @Image, @RitoPoints, @EloPoints, @Victories, @Defeats, @Draws)";
 
                 using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@Username", user.Username);
                     command.Parameters.AddWithValue("@Password", user.Password);
+                    command.Parameters.AddWithValue("@Bio", user.Bio);
+                    command.Parameters.AddWithValue("@Image", user.Image);
+                    command.Parameters.AddWithValue("@RitoPoints", user.RitoPoints);
+                    command.Parameters.AddWithValue("@EloPoints", user.EloPoints);
+                    command.Parameters.AddWithValue("@Victories", user.Victories);
+                    command.Parameters.AddWithValue("@Defeats", user.Defeats);
+                    command.Parameters.AddWithValue("@Draws", user.Draws);
 
                     command.ExecuteNonQuery();
                 }
@@ -156,6 +162,123 @@ namespace MTCG.Repositories
             }
         }
 
+        public void AddTokenToUser(string token, int userId)
+        {
+            HttpServer.Server.userTokens[token] = userId;
+        }
+
+        // Is Token in Dictionary?
+        public bool ValidateToken(string token)
+        {
+            // Überprüfe, ob der Token im Dictionary vorhanden ist
+            return HttpServer.Server.userTokens.ContainsKey(token);
+        }
+
+        public int GetUserIdByToken(string token)
+        {
+            // Versuche, den UserID-Wert für den gegebenen Token abzurufen
+            if (HttpServer.Server.userTokens.TryGetValue(token, out int userId))
+            {
+                return userId;
+            }
+
+            // Wenn der Token nicht gefunden wurde, gib -1 zurück oder wirf eine Ausnahme, je nach Bedarf
+            return -1;
+        }
+
+        public User GetUserByToken(string token)
+        {
+            // Überprüfe, ob der Token im Dictionary vorhanden ist
+            if (HttpServer.Server.userTokens.TryGetValue(token, out int userId))
+            {
+                // Holen Sie den Benutzer aus der Datenbank basierend auf der Benutzer-ID
+                using (NpgsqlConnection connection = _dbHandler.GetConnection())
+                {
+                    _dbHandler.OpenConnection(connection);
+
+                    string query = "SELECT * FROM mtcg_users WHERE id = @userId";
+
+                    using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@userId", userId);
+
+                        using (NpgsqlDataReader reader = command.ExecuteReader())
+                        {
+                            // Überprüfe, ob ein Datensatz gefunden wurde
+                            if (reader.Read())
+                            {
+                                // Erstelle einen Benutzerobjekt und gib es zurück
+                                User user = new User();
+                                user.Id = Convert.ToInt32(reader["id"]);
+                                user.Username = reader["username"].ToString();
+                                user.Password = reader["password"].ToString();
+                                user.Bio = reader["bio"].ToString();
+                                user.Image = reader["image"].ToString();
+                                user.RitoPoints = Convert.ToInt32(reader["ritopoints"]);
+                                user.EloPoints = Convert.ToInt32(reader["elopoints"]);
+                                user.Victories = Convert.ToInt32(reader["victories"]);
+                                user.Defeats = Convert.ToInt32(reader["defeats"]);
+                                user.Draws = Convert.ToInt32(reader["draws"]);
+
+                                return user;
+                            }
+                        }
+                    }
+
+                    _dbHandler.CloseConnection(connection);
+                }
+            }
+
+            // Wenn der Token nicht gefunden wurde oder der Benutzer nicht existiert, gib null zurück
+            return null;
+        }
+
+        public User GetUserByUsernameAndPassword(string username, string password)
+        {
+            // Holen Sie den Benutzer aus der Datenbank basierend auf der Benutzer-ID
+            using (NpgsqlConnection connection = _dbHandler.GetConnection())
+            {
+                _dbHandler.OpenConnection(connection);
+
+                string query = "SELECT * FROM mtcg_users WHERE username = @Username AND password = @Password";
+
+                using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Username", username);
+                    command.Parameters.AddWithValue("@Password", password);
+
+                    using (NpgsqlDataReader reader = command.ExecuteReader())
+                    {
+                        // Überprüfe, ob ein Datensatz gefunden wurde
+                        if (reader.Read())
+                        {
+                            // Erstelle einen Benutzerobjekt und gib es zurück
+                            User user = new User();
+                            user.Id = Convert.ToInt32(reader["id"]);
+                            user.Username = reader["username"].ToString();
+                            user.Password = reader["password"].ToString();
+                            user.Bio = reader["bio"].ToString();
+                            user.Image = reader["image"].ToString();
+                            user.RitoPoints = Convert.ToInt32(reader["ritopoints"]);
+                            user.EloPoints = Convert.ToInt32(reader["elopoints"]);
+                            user.Victories = Convert.ToInt32(reader["victories"]);
+                            user.Defeats = Convert.ToInt32(reader["defeats"]);
+                            user.Draws = Convert.ToInt32(reader["draws"]);
+
+                            return user;
+                        }
+                    }
+                }
+
+                _dbHandler.CloseConnection(connection);
+            }
+
+            // Wenn der Token nicht gefunden wurde oder der Benutzer nicht existiert, gib null zurück
+            return null;
+        }
+
+
+        /*
         // Add token to dictionary
         public void AddTokenToUser(string username, string token)
         {
@@ -193,18 +316,17 @@ namespace MTCG.Repositories
                             if (reader.Read())
                             {
                                 // Erstelle einen Benutzerobjekt und gib es zurück
-                                User user = new User(
-                                    id: Convert.ToInt32(reader["id"]),
-                                    uname: reader["username"].ToString(),
-                                    pwd: reader["password"].ToString(),
-                                    bio: reader["bio"].ToString(),
-                                    image: reader["image"].ToString(),
-                                    rp: Convert.ToInt32(reader["ritopoints"])
-                                    //elo: Convert.ToInt32(reader["elopoints"]),
-                                    //victs: Convert.ToInt32(reader["victories"]),
-                                    //losses: Convert.ToInt32(reader["defeats"]),
-                                    //draws: Convert.ToInt32(reader["draws"])
-                                );
+                                User user = new User();
+                                user.Id = Convert.ToInt32(reader["id"]);
+                                user.Username = reader["username"].ToString();
+                                user.Password = reader["password"].ToString();
+                                user.Bio = reader["bio"].ToString();
+                                user.Image = reader["image"].ToString();
+                                user.RitoPoints = Convert.ToInt32(reader["ritopoints"]);
+                                user.EloPoints = Convert.ToInt32(reader["elopoints"]);
+                                user.Victories = Convert.ToInt32(reader["victories"]);
+                                user.Defeats = Convert.ToInt32(reader["defeats"]);
+                                user.Draws = Convert.ToInt32(reader["draws"]);
 
                                 return user;
                             }
@@ -218,6 +340,7 @@ namespace MTCG.Repositories
             // Wenn der Token nicht gefunden wurde oder der Benutzer nicht existiert, gib null zurück
             return null;
         }
+        */
 
         public bool HasEnoughMoneyForPackage(string token)
         {
@@ -628,7 +751,44 @@ namespace MTCG.Repositories
             }
         }
 
+        public List<User> GetAllUsers()
+        {
+            List<User> users = new List<User>();
 
+            using (NpgsqlConnection connection = _dbHandler.GetConnection())
+            {
+                _dbHandler.OpenConnection(connection);
+
+                string query = "SELECT * FROM mtcg_users";
+
+                using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+                {
+                    using (NpgsqlDataReader reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            User user = new User();
+                            user.Id = Convert.ToInt32(reader["id"]);
+                            user.Username = reader["username"].ToString();
+                            user.Password = reader["password"].ToString();
+                            user.Bio = reader["bio"].ToString();
+                            user.Image = reader["image"].ToString();
+                            user.RitoPoints = Convert.ToInt32(reader["ritopoints"]);
+                            user.EloPoints = Convert.ToInt32(reader["elopoints"]);
+                            user.Victories = Convert.ToInt32(reader["victories"]);
+                            user.Defeats = Convert.ToInt32(reader["defeats"]);
+                            user.Draws = Convert.ToInt32(reader["draws"]);
+
+                            users.Add(user);
+                        }
+                    }
+                }
+
+                _dbHandler.CloseConnection(connection);
+            }
+
+            return users;
+        }
 
     }
 }

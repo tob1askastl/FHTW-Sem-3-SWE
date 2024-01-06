@@ -1,21 +1,22 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Text;
+using System.Text.Json.Serialization;
 
 namespace MTCG
 {
     public class User
     {
-        public string Username { get; private set; }
-        public string Password { get; private set; }
-        public string Bio { get; private set; } = "Basic biographie";
-        public string Image { get; private set; } = ":^(";
-        public int Id { get; init; } = -1;
+        public string Username { get; set; }
+        public string Password { get; set; }
+        public string Bio { get; set; } = "Basic biographie";
+        public string Image { get; set; } = ":^(";
+        public int Id { get; set; } = -1;
 
         // Währung für Cards
-        public int RitoPoints { get; private set; }
-        public int EloPoints { get; private set; }
-        public int Victories { get; private set; } = 0;
-        public int Defeats { get; private set; } = 0;
-        public int Draws { get; private set; } = 0;
+        public int RitoPoints { get; set; } = 20;
+        public int EloPoints { get; set; } = 100;
+        public int Victories { get; set; } = 0;
+        public int Defeats { get; set; } = 0;
+        public int Draws { get; set; } = 0;
 
         // Stack: alle verfügbaren Karten
         public List<Card>? Stack { get; private set; }
@@ -23,6 +24,7 @@ namespace MTCG
         // Deck: 4 ausgewählte Karten für den Kampf
         public List<Card>? Deck { get; private set; }
 
+        /*
         public User(string uname, string pwd)
         {
             Username = uname;
@@ -59,8 +61,16 @@ namespace MTCG
 
         public User()
         {
-                
+            // only 4 serializer               
         }
+
+        public User(string username, string bio, string image)
+        {
+            Username = username;
+            Bio = bio; 
+            Image = image;
+        }
+        */
 
         public void DecreaseRitoPoints(int amount)
         {
@@ -74,17 +84,28 @@ namespace MTCG
             }
         }
 
-        public void EditUsername(string newName)
+        public string PrintStats()
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append(Username).Append(" | EloPoints: ").Append(EloPoints)
+                .Append(" | Victories: ").Append(Victories)
+                .Append(" | Defeats: ").Append(Defeats)
+                .Append(" | Draws: ").Append(Draws);
+
+            return sb.ToString();
+        }
+
+        public void SetUsername(string newName)
         {
             Username = newName;
         }
 
-        public void EditBio(string newBio)
+        public void SetBio(string newBio)
         {
             Bio = newBio;
         }
 
-        public void EditImage(string newImage)
+        public void SetImage(string newImage)
         {
             Image = newImage;
         }

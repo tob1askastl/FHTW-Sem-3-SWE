@@ -11,6 +11,8 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
+using System.Text.Json;
+using JsonSerializer = Newtonsoft.Json.JsonSerializer;
 
 namespace MTCG.Request
 {
@@ -111,16 +113,16 @@ namespace MTCG.Request
             }
 
 
-            // 
-            else if (method == "POST" && path == "/")
+            // CURL 15 Stats (single User info)
+            else if (method == "GET" && path == "/stats")
             {
-
+                HandleViewStats(requestLines);
             }
 
-            // 
-            else if (method == "POST" && path == "/")
+            // CURL 16 Scoreboard (all users info)
+            else if (method == "GET" && path == "/scoreboard")
             {
-
+                HandleViewScoreboard(requestLines);
             }
 
             // 
@@ -138,24 +140,23 @@ namespace MTCG.Request
 
             JsonUserData userData = Newtonsoft.Json.JsonConvert.DeserializeObject<JsonUserData>(requestBody);
 
-            // Extrahiere Username und Password
-            string username = userData.Username;
-            string password = userData.Password;
             string response;
+            User newUser = new User();
 
-            User newUser = new User(username, password);
+            newUser.Username = userData.Username;
+            newUser.Password = userData.Password;
 
             // Registration erfolgreich
             if (userRepository.AddUser(newUser, out string responseMessage))
             {
-                Console.WriteLine($"Registration erfolgreich für Benutzer '{username}'.");
+                Console.WriteLine($"Registration erfolgreich für Benutzer '{newUser.Username}'.");
                 response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nRegistration successful\r\n";
             }
 
             // Registration fehlgeschlagen
             else
             {
-                Console.WriteLine($"Registration fehlgeschlagen für Benutzer '{username}': {responseMessage}");
+                Console.WriteLine($"Registration fehlgeschlagen für Benutzer '{newUser.Username}': {responseMessage}");
 
                 response = "HTTP/1.1 409 Conflict\r\nContent-Type: text/plain\r\n\r\n" + responseMessage + "\r\n";
                 client.Send(Encoding.ASCII.GetBytes(response));
@@ -174,11 +175,13 @@ namespace MTCG.Request
             string username = loginData.Username;
             string password = loginData.Password;
 
+            User user = userRepository.GetUserByUsernameAndPassword(username, password);
+
             // Anmeldung erfolgreich
             if (userRepository.ValidateUserCredentials(username, password))
             {
                 string token = GenerateToken(username);
-                HttpServer.Server.TokensLoggedInUsers.Add(token);
+                HttpServer.Server.userTokens.TryAdd(token, user.Id);
 
                 Console.WriteLine($"Anmeldung erfolgreich für Benutzer '{username}'.");
                 string response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nLogin successful\r\n";
@@ -252,7 +255,6 @@ namespace MTCG.Request
             client.Send(Encoding.ASCII.GetBytes(response));
         }
 
-
         private void HandleBuyAndOpenPackages(string[] requestLines)
         {
             // Überprüfe die Autorisierung
@@ -260,7 +262,13 @@ namespace MTCG.Request
             string token = authorizationHeader?.Replace("Authorization: Bearer ", "").Trim();
             string response;
 
-            //Console.WriteLine(token);
+            /*
+            Console.WriteLine("token:" + token);
+            foreach(var x in HttpServer.Server.userTokens)
+            {
+                Console.WriteLine(x.Key);
+            }
+            */
 
             if (string.IsNullOrEmpty(token) || !userRepository.ValidateToken(token))
             {
@@ -451,14 +459,19 @@ namespace MTCG.Request
                 client.Send(Encoding.ASCII.GetBytes(response));
                 return;
             }
-            Console.WriteLine("requestline[0]" + requestLines[0]);
-            Console.WriteLine("requestline[1]" + requestLines[1]);
-            Console.WriteLine("requestline[2]" + requestLines[2]);
-            Console.WriteLine("requestline[3]" + requestLines[3]);
+
             Console.WriteLine(userName);
 
             // Hole den Benutzer aus der Datenbank
             User user = userRepository.GetUserByToken(token);
+
+            /*
+            Console.WriteLine(token);
+            foreach (var x in HttpServer.Server.userTokens)
+            {
+                Console.WriteLine(x);
+            }
+            */
 
             if (user == null || !user.Username.Equals(userName, StringComparison.OrdinalIgnoreCase))
             {
@@ -505,6 +518,10 @@ namespace MTCG.Request
             // Hole den JSON-Body der Anfrage und deserialisiere ihn in ein User-Objekt
             string requestBody = GetRequestBody(requestLines);
 
+            // In UpdatedUser sollen die übergebenen Json-Attribute stehen, die vom RequestBody übergeben werden
+
+            Console.WriteLine("body: " + requestBody);
+
             User updatedUser = JsonConvert.DeserializeObject<User>(requestBody);
 
             if (updatedUser == null)
@@ -515,16 +532,10 @@ namespace MTCG.Request
                 return;
             }
 
-            // HELP
-
-            Console.WriteLine(updatedUser.Username);
-            Console.WriteLine(updatedUser.Bio);
-            Console.WriteLine(updatedUser.Image);
-
             // Aktualisiere die Benutzerdaten
-            user.EditUsername(updatedUser.Username);
-            user.EditBio(updatedUser.Bio);
-            user.EditImage(updatedUser.Image);
+            user.SetUsername(updatedUser.Username);
+            user.SetBio(updatedUser.Bio);
+            user.SetImage(updatedUser.Image);
 
             // Speichere die aktualisierten Benutzerdaten in der Datenbank
             userRepository.EditUser(user);
@@ -542,12 +553,80 @@ namespace MTCG.Request
             return segments.Length >= 3 ? segments[2].Split(' ')[0].Trim() : null;
         }
 
-
         private string GetRequestBody(string[] requestLines)
         {
             // Extrahiere den JSON-Body aus den Anforderungslinien
             int bodyIndex = Array.IndexOf(requestLines, requestLines.First(line => line.StartsWith("{")));
             return bodyIndex >= 0 ? string.Join(Environment.NewLine, requestLines.Skip(bodyIndex)) : null;
+        }
+
+        private void HandleViewStats(string[] requestLines)
+        {
+            string authorizationHeader = requestLines.FirstOrDefault(line => line.StartsWith("Authorization:"));
+            string token = authorizationHeader?.Replace("Authorization: Bearer ", "").Trim();
+            string username = GetUsernameFromToken(token);
+            string response;
+
+            // Hole den Benutzer aus der Datenbank
+            User user = userRepository.GetUserByToken(token);
+
+            if (user != null)
+            {
+                string jsonResponse = JsonConvert.SerializeObject(user.PrintStats());
+                response = $"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n{jsonResponse}\r\n";
+                client.Send(Encoding.ASCII.GetBytes(response));
+            }
+
+            else
+            {
+                response = "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\r\nUser not found\r\n";
+                client.Send(Encoding.ASCII.GetBytes(response));
+                return;
+            }
+        }
+
+        private string GetUsernameFromToken(string token)
+        {
+            // Extrahiere den Benutzernamen aus dem Token
+            return token?.Split('-')[0];
+        }
+
+        private void HandleViewScoreboard(string[] requestLines)
+        {
+            string authorizationHeader = requestLines.FirstOrDefault(line => line.StartsWith("Authorization:"));
+            string token = authorizationHeader?.Replace("Authorization: Bearer ", "").Trim();
+            string response;
+
+            // Überprüfe die Autorisierung und hole den Benutzer aus der Datenbank
+            if (string.IsNullOrEmpty(token) || !userRepository.ValidateToken(token))
+            {
+                // Autorisierung fehlgeschlagen
+                response = "HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\n\r\nUnauthorized\r\n";
+                client.Send(Encoding.ASCII.GetBytes(response));
+                return;
+            }
+
+            // Hole alle Benutzer aus der Datenbank
+            List<User> allUsers = userRepository.GetAllUsers();
+
+            if (allUsers != null && allUsers.Count > 0)
+            {
+                // Erstelle eine Liste von JSON-Strings für die Statistiken aller Benutzer
+                List<string> userStatsJson = allUsers.Select(u => u.PrintStats()).ToList();
+
+                // Kombiniere die JSON-Strings zu einer einzelnen Antwort
+                string jsonResponse = string.Join(Environment.NewLine, userStatsJson);
+
+                // Sende die Antwort
+                response = $"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n{jsonResponse}\r\n";
+                client.Send(Encoding.ASCII.GetBytes(response));
+            }
+            else
+            {
+                // Keine Benutzer gefunden
+                response = "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\r\nNo users found\r\n";
+                client.Send(Encoding.ASCII.GetBytes(response));
+            }
         }
 
     }
