@@ -21,7 +21,6 @@ namespace MTCG.Request
     {
         public static readonly int PORT = 10001;
         public static readonly string URL = "http://127.0.0.1:" + HttpServer.PORT;
-        //public ConcurrentBag<string> TokensLoggedInUsers;
         public ConcurrentDictionary<string, int> userTokens;
 
         private Socket listeningSocket;
@@ -45,7 +44,6 @@ namespace MTCG.Request
         public HttpServer()
         {
             listeningSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            //TokensLoggedInUsers = new ConcurrentBag<string>();
             userTokens = new ConcurrentDictionary<string, int>();
             dbHandler = new DbHandler();
         }
@@ -57,6 +55,7 @@ namespace MTCG.Request
 
             Console.WriteLine("Http Server is running");
 
+            // Testen mit Curl-Skript
             DropTables();
             CreateTableUsers();
             CreateTableCards();

@@ -38,17 +38,5 @@ namespace MTCG.Database
                 connection.Close();
             }
         }
-
-        public NpgsqlDataReader ExecuteQuery(string query)
-        {
-            using (var connection = GetConnection())
-            {
-                OpenConnection(connection);
-                using (var command = new NpgsqlCommand(query, connection))
-                {
-                    return command.ExecuteReader();
-                }
-            }
-        }
     }
 }

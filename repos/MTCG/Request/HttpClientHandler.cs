@@ -18,18 +18,20 @@ namespace MTCG.Request
 {
     internal class HttpClientHandler
     {
-        private static readonly string TOKEN = "token";
         private Socket client;
         private const int bufferSize = 4096;
 
         UserRepository userRepository;
         CardRepository cardRepository;
 
+        private readonly BattleManager battleManager;
+
         public HttpClientHandler(Socket client)
         {
             this.client = client;
             userRepository = new UserRepository();
             cardRepository = new CardRepository();
+            battleManager = new BattleManager();
         }
 
         public void Start(object state)
@@ -125,10 +127,27 @@ namespace MTCG.Request
                 HandleViewScoreboard(requestLines);
             }
 
-            // 
-            else if (method == "POST" && path == "/")
+            // CURL 17 Battle
+            else if (method == "POST" && path == "/battles")
             {
+                string authorizationHeader = requestLines.FirstOrDefault(line => line.StartsWith("Authorization:"));
+                string token = authorizationHeader?.Replace("Authorization: Bearer ", "").Trim();
 
+                // Überprüfe die Autorisierung und hole den Benutzer aus der Datenbank
+                if (string.IsNullOrEmpty(token) || !userRepository.ValidateToken(token))
+                {
+                    // Autorisierung fehlgeschlagen
+                    string response = "HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\n\r\nUnauthorized\r\n";
+                    client.Send(Encoding.ASCII.GetBytes(response));
+                    return;
+                }
+
+                // Der Spieler startet den Kampf
+                battleManager.StartBattle(token);
+
+                // Hier kannst du eine Bestätigung oder andere Logik hinzufügen
+                string battleResponse = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nBattle started\r\n";
+                client.Send(Encoding.ASCII.GetBytes(battleResponse));
             }
 
             client.Close();
@@ -262,14 +281,6 @@ namespace MTCG.Request
             string token = authorizationHeader?.Replace("Authorization: Bearer ", "").Trim();
             string response;
 
-            /*
-            Console.WriteLine("token:" + token);
-            foreach(var x in HttpServer.Server.userTokens)
-            {
-                Console.WriteLine(x.Key);
-            }
-            */
-
             if (string.IsNullOrEmpty(token) || !userRepository.ValidateToken(token))
             {
                 // Autorisierung fehlgeschlagen
@@ -288,7 +299,7 @@ namespace MTCG.Request
             }
 
             // Kaufe und öffne das Paket
-            List<Card> boughtCards = userRepository.BuyAndOpenPackage(token);
+            List<Card> boughtCards = cardRepository.BuyAndOpenPackage(token);
 
             // Überprüfe, ob Karten gekauft und geöffnet wurden
             if (boughtCards == null || boughtCards.Count == 0)
@@ -332,7 +343,7 @@ namespace MTCG.Request
             }
 
             // Hole alle Karten des Benutzers aus der Datenbank
-            List<Card> userCards = userRepository.GetCardsByUserId(user.Id);
+            List<Card> userCards = cardRepository.GetCardsByUserId(user.Id);
 
             // Handle die Rückgabe (z.B., sende die Liste der Karten als JSON)
             string jsonResponse = JsonConvert.SerializeObject(userCards);
@@ -356,7 +367,7 @@ namespace MTCG.Request
             }
 
             // Hole die Karten des Benutzers für das Deck aus der Datenbank
-            List<Card> userDeck = userRepository.GetDeck(token);
+            List<Card> userDeck = cardRepository.GetDeck(token);
 
             // Handle die Rückgabe basierend auf dem Zustand des Decks
             if (userDeck == null || !userDeck.Any())
@@ -391,7 +402,7 @@ namespace MTCG.Request
             }
 
             // Hole die Karten des Benutzers für das Deck aus der Datenbank
-            List<Card> userDeck = userRepository.GetDeck(token);
+            List<Card> userDeck = cardRepository.GetDeck(token);
 
             // Handle die Rückgabe basierend auf dem Zustand des Decks
             if (userDeck == null || !userDeck.Any())
@@ -431,7 +442,7 @@ namespace MTCG.Request
             List<int> selectedCardIds = JsonConvert.DeserializeObject<List<int>>(requestBody);
 
             // Konfiguriere das Deck des Benutzers und handle die Rückgabe
-            if (userRepository.ConfigureDeck(token, selectedCardIds))
+            if (cardRepository.ConfigureDeck(token, selectedCardIds))
             {
                 response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nDeck erfolgreich konfiguriert\r\n";
                 client.Send(Encoding.ASCII.GetBytes(response));
@@ -464,14 +475,6 @@ namespace MTCG.Request
 
             // Hole den Benutzer aus der Datenbank
             User user = userRepository.GetUserByToken(token);
-
-            /*
-            Console.WriteLine(token);
-            foreach (var x in HttpServer.Server.userTokens)
-            {
-                Console.WriteLine(x);
-            }
-            */
 
             if (user == null || !user.Username.Equals(userName, StringComparison.OrdinalIgnoreCase))
             {
@@ -628,6 +631,5 @@ namespace MTCG.Request
                 client.Send(Encoding.ASCII.GetBytes(response));
             }
         }
-
     }
 }
