@@ -17,28 +17,28 @@ namespace MTCG.Repositories
             _dbHandler = new DbHandler();
         }
 
-        // Weitere Methoden zum Arbeiten mit Karten (Champions und Spells)
-
         public void AddCard(Card card)
         {
             using (NpgsqlConnection connection = _dbHandler.GetConnection())
             {
                 _dbHandler.OpenConnection(connection);
 
-                string query = "INSERT INTO mtcg_cards (name, region, damage, card_type) " +
-                               "VALUES (@name, @region, @damage, @cardType)";
+                string query = "INSERT INTO mtcg_cards (name, region, damage, card_type, is_used, owner_id) VALUES (@name, @region, @damage, @cardType, false, @ownerID) RETURNING card_id";
 
                 using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@name", card.Name);
-
                     command.Parameters.AddWithValue("@region", (int)card.Region);
-
                     command.Parameters.AddWithValue("@damage", card.Damage);
-
                     command.Parameters.AddWithValue("@cardType", GetCardType(card));
+                    command.Parameters.AddWithValue("@ownerID", DBNull.Value);
 
-                    command.ExecuteNonQuery();
+                    // ExecuteScalar gibt die generierte ID zurück
+                    object result = command.ExecuteScalar();
+                    if (result != null && int.TryParse(result.ToString(), out int generatedId))
+                    {
+                        card.Id = generatedId;
+                    }
                 }
 
                 _dbHandler.CloseConnection(connection);
@@ -63,7 +63,6 @@ namespace MTCG.Repositories
             }
         }
 
-
         public void UpdateCard(Card card)
         {
             // Implementiere die Logik zum Aktualisieren einer Karte in der Datenbank
@@ -74,29 +73,6 @@ namespace MTCG.Repositories
             // Implementiere die Logik zum Löschen einer Karte aus der Datenbank
         }
 
-        public Card GetCardById(int cardId)
-        {
-            // Implementiere die Logik zum Abrufen einer Karte aus der Datenbank anhand der ID
-            // Beachte, dass dies eine allgemeine Methode für Karten ist und die spezifische Klasse (Champion oder Spell) im Rückgabetyp stehen könnte.
-            return null;
-        }
 
-        public static void TruncateTable()
-        {
-            DbHandler dbHandler = new DbHandler();
-            using (NpgsqlConnection connection = dbHandler.GetConnection())
-            {
-                dbHandler.OpenConnection(connection);
-
-                string query = "TRUNCATE TABLE mtcg_cards RESTART IDENTITY";
-
-                using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
-                {
-                    command.ExecuteNonQuery();
-                }
-
-                dbHandler.CloseConnection(connection);
-            }
-        }
     }
 }

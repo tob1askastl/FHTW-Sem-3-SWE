@@ -1,4 +1,6 @@
-﻿namespace MTCG
+﻿using System.Text.Json.Serialization;
+
+namespace MTCG
 {
     public class User
     {
@@ -9,7 +11,7 @@
         public int Id { get; init; } = -1;
 
         // Währung für Cards
-        public int RitoPoints { get; private set; } = 20;
+        public int RitoPoints { get; private set; }
         public int EloPoints { get; private set; }
         public int Victories { get; private set; } = 0;
         public int Defeats { get; private set; } = 0;
@@ -43,6 +45,48 @@
             Draws = draws;
             Stack = new List<Card>();
             Deck = new List<Card>();
+        }
+
+        public User(int id, string uname, string pwd, string bio, string image, int rp)
+        {
+            Id = id;
+            Username = uname;
+            Password = pwd;
+            Bio = bio;
+            Image = image;
+            RitoPoints = rp;
+        }
+
+        public User()
+        {
+                
+        }
+
+        public void DecreaseRitoPoints(int amount)
+        {
+            if (amount >= 0 && RitoPoints - amount >= 0)
+            {
+                RitoPoints -= amount;
+            }
+            else
+            {
+                throw new InvalidOperationException("Ungültiger Betrag für die Verringerung der RitoPoints.");
+            }
+        }
+
+        public void EditUsername(string newName)
+        {
+            Username = newName;
+        }
+
+        public void EditBio(string newBio)
+        {
+            Bio = newBio;
+        }
+
+        public void EditImage(string newImage)
+        {
+            Image = newImage;
         }
 
         public void WinGame()
