@@ -4,7 +4,8 @@ Tobias Kastl, Semester 3 / A1, if22b007
 
 # Git-Repo
 
-
+https://github.com/tob1askastl/FHTW-Sem-3-SWE
+https://github.com/tob1askastl/FHTW-Sem-3-SWE/tree/main/repos/MTCG (Project-Directory)
 
 # Docker-Setup fuer Datenbank
 
