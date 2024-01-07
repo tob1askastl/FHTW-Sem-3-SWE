@@ -11,14 +11,14 @@ namespace MTCG
         public string Image { get; set; } = ":^(";
         public int Id { get; set; } = -1;
 
-        // Währung für Cards
+        // RitoPoints = Währung
         public int RitoPoints { get; set; } = 20;
         public int EloPoints { get; set; } = 100;
         public int Victories { get; set; } = 0;
         public int Defeats { get; set; } = 0;
         public int Draws { get; set; } = 0;
 
-        // Deck: 4 ausgewählte Karten für den Kampf
+        // Spieldeck für den Kampf (4 Karten)
         public List<Card>? Deck { get; set; }
 
         public void DecreaseRitoPoints(int amount)

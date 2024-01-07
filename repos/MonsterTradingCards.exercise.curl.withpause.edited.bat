@@ -17,12 +17,16 @@ echo.
 curl -i -X POST http://localhost:10001/users --header "Content-Type: application/json" -d "{\"Username\":\"admin\",    \"Password\":\"istrator\"}"
 echo.
 
+pause
+
 echo should fail:
 curl -i -X POST http://localhost:10001/users --header "Content-Type: application/json" -d "{\"Username\":\"kienboec\", \"Password\":\"daniel\"}"
 echo.
 curl -i -X POST http://localhost:10001/users --header "Content-Type: application/json" -d "{\"Username\":\"kienboec\", \"Password\":\"different\"}"
 echo. 
 echo.
+
+pause
 
 REM --------------------------------------------------
 echo 2) Login Users
@@ -33,10 +37,14 @@ echo.
 curl -i -X POST http://localhost:10001/sessions --header "Content-Type: application/json" -d "{\"Username\":\"admin\",    \"Password\":\"istrator\"}"
 echo.
 
+pause
+
 echo should fail:
 curl -i -X POST http://localhost:10001/sessions --header "Content-Type: application/json" -d "{\"Username\":\"kienboec\", \"Password\":\"different\"}"
 echo.
 echo.
+
+pause
 
 REM --------------------------------------------------
 echo 3) create packages (done by "admin") - edited
@@ -54,6 +62,9 @@ curl -i -X POST http://localhost:10001/packages --header "Content-Type: applicat
 echo.
 echo.
 
+pause
+
+
 REM --------------------------------------------------
 echo 4) acquire packages kienboec
 curl -i -X POST http://localhost:10001/transactions/packages --header "Content-Type: application/json" --header "Authorization: Bearer kienboec-mtcgToken" -d ""
@@ -69,6 +80,8 @@ curl -i -X POST http://localhost:10001/transactions/packages --header "Content-T
 echo.
 echo.
 
+pause
+
 REM --------------------------------------------------
 echo 5) acquire packages altenhof
 curl -i -X POST http://localhost:10001/transactions/packages --header "Content-Type: application/json" --header "Authorization: Bearer altenhof-mtcgToken" -d ""
@@ -80,6 +93,8 @@ curl -i -X POST http://localhost:10001/transactions/packages --header "Content-T
 echo.
 echo.
 
+pause
+
 REM --------------------------------------------------
 echo 6) add new packages
 curl -i -X POST http://localhost:10001/packages --header "Content-Type: application/json" --header "Authorization: Bearer admin-mtcgToken" -d "[{\"Id\":26, \"Name\":\"WaterGoblin\", \"Damage\": 10.0, \"card_type\":\"Champion\"}, {\"Id\":27, \"Name\":\"RegularSpell\", \"Damage\": 50.0, \"card_type\":\"Spell\"}, {\"Id\":28, \"Name\":\"Knight\", \"Damage\": 20.0, \"card_type\":\"Champion\"}, {\"Id\":29, \"Name\":\"RegularSpell\", \"Damage\": 45.0, \"card_type\":\"Spell\"}, {\"Id\":30, \"Name\":\"FireElf\", \"Damage\": 25.0, \"card_type\":\"Champion\"}]"
@@ -89,6 +104,8 @@ echo.
 curl -i -X POST http://localhost:10001/packages --header "Content-Type: application/json" --header "Authorization: Bearer admin-mtcgToken" -d "[{\"Id\":36, \"Name\":\"WaterGoblin\", \"Damage\": 11.0, \"card_type\":\"Champion\"}, {\"Id\":37, \"Name\":\"Dragon\", \"Damage\": 70.0, \"card_type\":\"Champion\"}, {\"Id\":38, \"Name\":\"Knight\", \"Damage\": 22.0, \"card_type\":\"Champion\"}, {\"Id\":39, \"Name\":\"WaterSpell\", \"Damage\": 40.0, \"card_type\":\"Spell\"}, {\"Id\":40, \"Name\":\"FireElf\", \"Damage\": 28.0, \"card_type\":\"Champion\"}]"
 echo.
 echo.
+
+pause
 
 REM --------------------------------------------------
 echo 7) acquire newly created packages altenhof
@@ -101,6 +118,8 @@ curl -i -X POST http://localhost:10001/transactions/packages --header "Content-T
 echo.
 echo.
 
+pause
+
 REM --------------------------------------------------
 echo 8) show all acquired cards kienboec
 curl -i -X GET http://localhost:10001/cards --header "Authorization: Bearer kienboec-mtcgToken"
@@ -109,11 +128,15 @@ curl -i -X GET http://localhost:10001/cards
 echo.
 echo.
 
+pause
+
 REM --------------------------------------------------
 echo 9) show all acquired cards altenhof
 curl -i -X GET http://localhost:10001/cards --header "Authorization: Bearer altenhof-mtcgToken"
 echo.
 echo.
+
+pause
 
 REM --------------------------------------------------
 echo 10) show unconfigured deck
@@ -122,6 +145,8 @@ echo.
 curl -i -X GET http://localhost:10001/deck --header "Authorization: Bearer altenhof-mtcgToken"
 echo.
 echo.
+
+pause
 
 REM --------------------------------------------------
 echo 11) configure deck - edited
@@ -136,6 +161,8 @@ curl -i -X GET http://localhost:10001/deck --header "Authorization: Bearer alten
 echo.
 echo.
 
+pause
+
 echo should fail and show original from before:
 curl -i -X PUT http://localhost:10001/deck --header "Content-Type: application/json" --header "Authorization: Bearer altenhof-mtcgToken" -d "[1, 2, 3, 4]"
 echo.
@@ -146,6 +173,8 @@ echo should fail ... only 3 cards set
 curl -i -X PUT http://localhost:10001/deck --header "Content-Type: application/json" --header "Authorization: Bearer altenhof-mtcgToken" -d "[36, 37, 38]"
 echo.
 
+pause
+
 REM --------------------------------------------------
 echo 12) show configured deck 
 curl -i -X GET http://localhost:10001/deck --header "Authorization: Bearer kienboec-mtcgToken"
@@ -153,6 +182,8 @@ echo.
 curl -i -X GET http://localhost:10001/deck --header "Authorization: Bearer altenhof-mtcgToken"
 echo.
 echo.
+
+pause
 
 REM --------------------------------------------------
 echo 13) show configured deck different representation
@@ -164,6 +195,8 @@ echo altenhof
 curl -i -X GET http://localhost:10001/deck?format=plain --header "Authorization: Bearer altenhof-mtcgToken"
 echo.
 echo.
+
+pause
 
 REM --------------------------------------------------
 echo 14) edit user data
@@ -182,6 +215,8 @@ curl -i -X GET http://localhost:10001/users/Altenhofer --header "Authorization: 
 echo.
 echo.
 
+pause
+
 echo should fail:
 curl -i -X GET http://localhost:10001/users/Altenhofer --header "Authorization: Bearer kienboec-mtcgToken"
 echo.
@@ -195,6 +230,8 @@ curl -i -X GET http://localhost:10001/users/someGuy  --header "Authorization: Be
 echo.
 echo.
 
+pause
+
 REM --------------------------------------------------
 echo 15) stats
 curl -i -X GET http://localhost:10001/stats --header "Authorization: Bearer kienboec-mtcgToken"
@@ -202,6 +239,8 @@ echo.
 curl -i -X GET http://localhost:10001/stats --header "Authorization: Bearer altenhof-mtcgToken"
 echo.
 echo.
+
+pause
 
 REM --------------------------------------------------
 echo 16) scoreboard
@@ -212,7 +251,7 @@ echo.
 pause
 
 REM --------------------------------------------------
-echo 17) battle - edit (scoreboard)
+echo 17) battle - edit (added GET stats)
 start /b "kienboec battle" curl -i -X POST http://localhost:10001/battles --header "Authorization: Bearer kienboec-mtcgToken"
 
 echo kienboec

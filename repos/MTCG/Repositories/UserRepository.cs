@@ -11,7 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace MTCG.Repositories
-{
+{   
     public class UserRepository
     {
         private readonly DbHandler _dbHandler;
@@ -91,17 +91,16 @@ namespace MTCG.Repositories
                 using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@Username", username);
-
-                    // Führe die Abfrage aus und erhalte die Anzahl der Benutzer mit dem angegebenen Benutzernamen
+                    
+                    // Anzahl der User mit jenem Usernamen
                     int userCount = Convert.ToInt32(command.ExecuteScalar());
 
-                    // Wenn die Anzahl größer als 0 ist, existiert der Benutzer bereits
                     return userCount > 0;
                 }
             }
         }
 
-        // "Login"?
+        // Login
         public bool ValidateUserCredentials(string username, string password)
         {
             using (NpgsqlConnection connection = _dbHandler.GetConnection())
@@ -115,28 +114,23 @@ namespace MTCG.Repositories
                     command.Parameters.AddWithValue("@Username", username);
                     command.Parameters.AddWithValue("@Password", password);
 
-                    // Führe die Abfrage aus und erhalte die Anzahl der Benutzer mit den angegebenen Anmeldeinformationen
                     int userCount = Convert.ToInt32(command.ExecuteScalar());
 
-                    // Wenn die Anzahl größer als 0 ist, sind die Anmeldeinformationen gültig
                     return userCount > 0;
                 }
             }
         }
 
-        // Is Token in Dictionary?
+        // Ist Token im Dictionary?
         public bool ValidateToken(string token)
         {
-            // Überprüfe, ob der Token im Dictionary vorhanden ist
             return HttpServer.Server.userTokens.ContainsKey(token);
         }
 
         public User GetUserByToken(string token)
         {
-            // Überprüfe, ob der Token im Dictionary vorhanden ist
             if (HttpServer.Server.userTokens.TryGetValue(token, out int userId))
             {
-                // Holen Sie den Benutzer aus der Datenbank basierend auf der Benutzer-ID
                 using (NpgsqlConnection connection = _dbHandler.GetConnection())
                 {
                     _dbHandler.OpenConnection(connection);
@@ -149,11 +143,10 @@ namespace MTCG.Repositories
 
                         using (NpgsqlDataReader reader = command.ExecuteReader())
                         {
-                            // Überprüfe, ob ein Datensatz gefunden wurde
                             if (reader.Read())
                             {
-                                // Erstelle einen Benutzerobjekt und gib es zurück
                                 User user = new User();
+
                                 user.Id = Convert.ToInt32(reader["id"]);
                                 user.Username = reader["username"].ToString();
                                 user.Password = reader["password"].ToString();
@@ -174,13 +167,11 @@ namespace MTCG.Repositories
                 }
             }
 
-            // Wenn der Token nicht gefunden wurde oder der Benutzer nicht existiert, gib null zurück
             return null;
         }
 
         public User GetUserByUsernameAndPassword(string username, string password)
         {
-            // Holen Sie den Benutzer aus der Datenbank basierend auf der Benutzer-ID
             using (NpgsqlConnection connection = _dbHandler.GetConnection())
             {
                 _dbHandler.OpenConnection(connection);
@@ -194,11 +185,10 @@ namespace MTCG.Repositories
 
                     using (NpgsqlDataReader reader = command.ExecuteReader())
                     {
-                        // Überprüfe, ob ein Datensatz gefunden wurde
                         if (reader.Read())
                         {
-                            // Erstelle einen Benutzerobjekt und gib es zurück
                             User user = new User();
+                             
                             user.Id = Convert.ToInt32(reader["id"]);
                             user.Username = reader["username"].ToString();
                             user.Password = reader["password"].ToString();
@@ -218,7 +208,6 @@ namespace MTCG.Repositories
                 _dbHandler.CloseConnection(connection);
             }
 
-            // Wenn der Token nicht gefunden wurde oder der Benutzer nicht existiert, gib null zurück
             return null;
         }
 
@@ -226,13 +215,11 @@ namespace MTCG.Repositories
         {
             int packageCost = 5;
 
-            // Hole den Benutzer aus der Datenbank
             User user = GetUserByToken(token);
 
             Console.WriteLine("Username: " + user.Username);
             Console.WriteLine("Amount of RP left: " + user.RitoPoints + "\n");
 
-            // Überprüfe, ob der Benutzer genug Geld für das Paket hat
             return user != null && user.RitoPoints >= packageCost;
         }
 
@@ -256,6 +243,7 @@ namespace MTCG.Repositories
             }
         }
 
+        // Scoreboard
         public List<User> GetAllUsers()
         {
             List<User> users = new List<User>();
@@ -273,6 +261,7 @@ namespace MTCG.Repositories
                         while (reader.Read())
                         {
                             User user = new User();
+
                             user.Id = Convert.ToInt32(reader["id"]);
                             user.Username = reader["username"].ToString();
                             user.Password = reader["password"].ToString();
@@ -301,6 +290,7 @@ namespace MTCG.Repositories
             {
                 _dbHandler.OpenConnection(connection);
 
+                // Wähle einen User aus; basierend auf OwnerID und UserID & jene Karten, die sich in seinem Deck befinden
                 string query = "SELECT u.* FROM mtcg_users u JOIN mtcg_cards c ON u.id = c.owner_id WHERE c.is_in_deck = true";
 
                 using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
@@ -312,6 +302,7 @@ namespace MTCG.Repositories
                         while (reader.Read())
                         {
                             User user = new User();
+
                             user.Id = Convert.ToInt32(reader["id"]);
                             user.Username = reader["username"].ToString();
                             user.Password = reader["password"].ToString();
@@ -332,6 +323,7 @@ namespace MTCG.Repositories
             }
         }
 
+        // Update Battle-Stats vom User
         public void EditStats(User user)
         {
             using (NpgsqlConnection connection = _dbHandler.GetConnection())

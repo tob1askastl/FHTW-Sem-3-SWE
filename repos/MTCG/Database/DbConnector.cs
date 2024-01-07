@@ -17,7 +17,8 @@ namespace MTCG.Database
         private const string DBNAME = "MTCG_DB";
         private const string USERNAME = "postgres";
         private const string PASSWORD = "MTCG";
-
+        
+        // Neue Verbindung zur Postegre-Datenbank erstellen
         public NpgsqlConnection CreateConnection()
         {
             var builder = new NpgsqlConnectionStringBuilder

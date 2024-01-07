@@ -9,14 +9,6 @@ using System.Net.Sockets;
 
 namespace MTCG.Request
 {
-
-    /*
-    docker exec -it MTCG psql -U postgres
-    \c MTCG_DB
-    \dt
-    \d mtcg_users
-     */
-
     public class HttpServer
     {
         public static readonly int PORT = 10001;
@@ -55,7 +47,7 @@ namespace MTCG.Request
 
             Console.WriteLine("Http Server is running");
 
-            // Testen mit Curl-Skript
+            // Fürs Testen mit Curl-Skript
             DropTables();
             CreateTableUsers();
             CreateTableCards();
@@ -101,7 +93,6 @@ namespace MTCG.Request
                 dbHandler.CloseConnection(connection);
             }
         }
-
 
         public void DropTables()
         {

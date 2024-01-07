@@ -2,8 +2,5 @@
 
 namespace MTCG
 {
-    public class Spell : Card
-    {
-
-    }
+    public class Spell : Card { }
 }
