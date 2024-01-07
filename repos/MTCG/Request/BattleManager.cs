@@ -22,16 +22,13 @@ namespace MTCG.Request
         {
             CardRepository cardRepository = new CardRepository();
 
-            // Hole den ersten Spieler basierend auf dem Token
             User User1 = userRepository.GetUserByToken(initiatingPlayerToken);
 
-            // Überprüfe, ob der erste Spieler verfügbar ist
             if (User1 != null)
             {
-                // Hole einen zufälligen zweiten Spieler aus der Datenbank, der ein Deck hat
+                // Suche einen Gegner (= User, der ebenfalls ein Deck hat und nicht der Initiating-Player ist)
                 User User2 = GetRandomPlayer(User1.Id);
 
-                // Überprüfe, ob der zweite Spieler verfügbar ist
                 if (User2 != null)
                 {
                     User1.Deck = cardRepository.GetCardsInDeckForUser(User1.Id);
@@ -55,7 +52,6 @@ namespace MTCG.Request
 
         public User GetRandomPlayer(int excludedUserId)
         {
-            // Hole einen zufälligen Spieler aus der Datenbank, der ein Deck hat und nicht der erste Spieler ist
             List<User> usersWithDecks = userRepository.GetUsersWithDecks();
 
             if (usersWithDecks.Count > 1)
@@ -63,7 +59,7 @@ namespace MTCG.Request
                 Random random = new Random();
                 int randomIndex = random.Next(0, usersWithDecks.Count);
 
-                // Stelle sicher, dass der zufällige Spieler nicht der erste Spieler ist
+                // Der "RandomPlayer" darf nicht die ID des Initiaters haben
                 while (usersWithDecks[randomIndex].Id == excludedUserId)
                 {
                     randomIndex = random.Next(0, usersWithDecks.Count);

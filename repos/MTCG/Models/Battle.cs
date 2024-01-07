@@ -43,6 +43,7 @@ namespace MTCG.Models
             EndBattle();
         }
 
+        // Einzelne Runde
         public void ExecuteRound()
         {
             Console.WriteLine("--- Round {0} ---", rounds);
@@ -84,6 +85,8 @@ namespace MTCG.Models
             rounds++;
         }
 
+        // Mandatory-Special-Feature
+        // Hat der User nur mehr eine Karte, hat er eine 25%-Chance, dem Gegner eine Karte zu stehlen
         public void CheckRedemption(User user)
         {
             if (user.Deck.Count == 1)
@@ -127,9 +130,9 @@ namespace MTCG.Models
             winner.Deck.Add(card);
         }
 
+        // Erhalte eine zufällige Karte aus dem Deck
         public Card GetRandomCard(List<Card> deck)
         {
-            // Deck ist leer
             if (deck.Count == 0)
             {
                 return null;
@@ -143,6 +146,7 @@ namespace MTCG.Models
             return randomCard;
         }
 
+        // Sollte irgendein User keine Karten mehr haben oder es wurden 100 Runden gespielt -> Battle endet
         public bool IsBattleOver()
         {
             return (User1.Deck.Count == 0 || User2.Deck.Count == 0 || rounds > MaxRounds);
@@ -150,7 +154,7 @@ namespace MTCG.Models
 
         public void EndBattle()
         {
-            // Spieler 2 gewinnt
+            // User 2 gewinnt
             if (User1.Deck.Count == 0)
             {
                 Console.WriteLine($"{User2.Username} wins!");
@@ -159,11 +163,11 @@ namespace MTCG.Models
                 User1.LoseGame();
                 User2.WinGame();
 
-                // Update(Winner, Loser);
+                // ! Gewinner muss als erster Parameter stehen
                 UpdateEloPoints(User2, User1);
             }
 
-            // Spieler 1 gewinnt
+            // User 1 gewinnt
             else if (User2.Deck.Count == 0)
             {
                 Console.WriteLine($"{User1.Username} wins!");
@@ -172,7 +176,7 @@ namespace MTCG.Models
                 User1.WinGame();
                 User2.LoseGame();
 
-                // Update(Winner, Loser);
+                // ! Gewinner muss als erster Parameter stehen
                 UpdateEloPoints(User1, User2);
             }
 
@@ -190,15 +194,16 @@ namespace MTCG.Models
             userRepository.EditStats(User2);
 
             Console.WriteLine("\n\nBATTLELOG\n");
+
             foreach (string line in BattleLog)
             {
                 Console.WriteLine(line);
             }
         }
 
+        // "Further Features": elo value
         public void UpdateEloPoints(User winner, User loser)
         {
-            // Further Features: elo value
             winner.EloPoints += 3;
             loser.EloPoints -= 5;
         }

@@ -17,6 +17,7 @@ namespace MTCG.Repositories
             _dbHandler = new DbHandler();
         }
 
+        // Füge neue Card in die Tabelle hinzu
         public void AddCard(Card card)
         {
             using (NpgsqlConnection connection = _dbHandler.GetConnection())
@@ -33,7 +34,7 @@ namespace MTCG.Repositories
                     command.Parameters.AddWithValue("@cardType", GetCardType(card));
                     command.Parameters.AddWithValue("@ownerID", DBNull.Value);
 
-                    // ExecuteScalar gibt die generierte ID zurück
+                    // Erhalte die generierte ID
                     object result = command.ExecuteScalar();
                     if (result != null && int.TryParse(result.ToString(), out int generatedId))
                     {
@@ -45,6 +46,7 @@ namespace MTCG.Repositories
             }
         }
 
+        // Erhalte CardType als String
         public string GetCardType(Card card)
         {
             if (card is Champion)
@@ -63,6 +65,7 @@ namespace MTCG.Repositories
             }
         }
 
+        // Erhalte die Karten eines Users, die in seinem Deck sind
         public List<Card> GetCardsInDeckForUser(int userId)
         {
             using (NpgsqlConnection connection = _dbHandler.GetConnection())
@@ -118,6 +121,7 @@ namespace MTCG.Repositories
             }
         }
 
+        // Überprüfe, ob noch genügend Karten in der Tabelle sind, die noch keinem gehören
         public bool AreEnoughCardsAvailable()
         {
             using (NpgsqlConnection connection = _dbHandler.GetConnection())
@@ -137,31 +141,24 @@ namespace MTCG.Repositories
             }
         }
 
+        // Logik für Package öffnen
         public List<Card> BuyAndOpenPackage(string token)
         {
-            // Überprüfe, ob genügend Karten verfügbar sind
             if (!AreEnoughCardsAvailable())
             {
-                // Keine verfügbaren Karten mehr
                 Console.WriteLine("Keine Karten mehr verfuegbar");
-                return null; // Oder eine leere Liste oder eine andere Kennzeichnung für das Fehlschlagen
+                return null;
             }
 
             UserRepository userRepository = new UserRepository();
 
-            // Hole den Benutzer aus der Datenbank
             User user = userRepository.GetUserByToken(token);
 
-            // Annahme: packagePrice ist der Preis eines Kartenpakets
             int packagePrice = 5;
-
-            // Ziehe den Preis des Kartenpakets ab
             user.DecreaseRitoPoints(packagePrice);
 
-            // Aktualisiere den Münzstand des Benutzers in der Datenbank
             userRepository.UpdateUserCoins(user.Username, user.RitoPoints);
 
-            // Erstelle und öffne das Kartenpaket
             List<Card> openedCards = OpenCardPackage();
 
             foreach (Card card in openedCards)
@@ -169,7 +166,7 @@ namespace MTCG.Repositories
                 Console.WriteLine(card.Id + ", " + card.Name);
             }
 
-            // Füge die geöffneten Karten dem Benutzer hinzu (z. B. in die Datenbank)
+            // Die geöffneten Karten werden dem User hinzugefügt
             AddOwnerToCard(user, openedCards);
 
             return openedCards;
@@ -192,18 +189,15 @@ namespace MTCG.Repositories
                 {
                     while (reader.Read())
                     {
-                        // Lese die Daten für jede Karte aus der Datenbank
                         int cardID = Convert.ToInt32(reader["card_id"]);
                         string name = reader["name"].ToString();
                         ERegion region = (ERegion)Enum.Parse(typeof(ERegion), reader["region"].ToString());
                         int damage = Convert.ToInt32(reader["damage"]);
                         string cardType = reader["card_type"].ToString();
-                        //bool is_used = Convert.ToBoolean(reader["is_used"]);
 
-                        // Überprüfe, ob "owner_id" ein DBNull-Wert ist
+                        // Überprüfe ob "owner_id" NULL ist
                         int owner_id = reader["owner_id"] == DBNull.Value ? -1 : Convert.ToInt32(reader["owner_id"]);
 
-                        // Erstelle ein Card-Objekt und setze IsUsed auf true
                         if (cardType.Equals("Champion"))
                         {
                             Champion champion = new Champion();
@@ -236,19 +230,19 @@ namespace MTCG.Repositories
                 _dbHandler.CloseConnection(connection);
             }
 
-            // Aktualisiere den Status der Verwendung in der Datenbank
             UpdateCardUsageStatus(openedCards);
 
             return openedCards;
         }
 
+
+        // Status der Karte in DB aktualisieren
         public void UpdateCardUsageStatus(List<Card> cards)
         {
             using (NpgsqlConnection connection = _dbHandler.GetConnection())
             {
                 _dbHandler.OpenConnection(connection);
 
-                // Aktualisiere den Status der Verwendung für jede Karte in der Liste
                 foreach (Card card in cards)
                 {
                     string query = "UPDATE mtcg_cards SET is_used = true WHERE card_id = @cardId";
@@ -274,13 +268,6 @@ namespace MTCG.Repositories
                 foreach (Card card in cards)
                 {
                     string query = "UPDATE mtcg_cards SET is_used = true, owner_id = @ownerid WHERE card_id = @cardId";
-
-                    /*
-                    Console.WriteLine("Card-ID:" + card.Id);
-                    Console.WriteLine("Card-OwnerID:" + card.OwnerID);
-                    Console.WriteLine("userid:" + user.Id);
-                    Console.WriteLine("username:" + user.Username);
-                    */
 
                     using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
                     {
@@ -320,7 +307,6 @@ namespace MTCG.Repositories
                             string cardType = reader["card_type"].ToString();
                             int owner_id = Convert.ToInt32(reader["owner_id"]);
 
-                            // Erstelle ein Card-Objekt
                             Card card;
 
                             if (cardType.Equals("Champion"))
@@ -368,12 +354,12 @@ namespace MTCG.Repositories
                 return null;
             }
 
-            // Wenn Karten schon als "is_in_Deck" deklariert sind, in userDeck speichern
             List<Card> userDeck = GetCardsByUserIdAndDeckStatus(user.Id, true);
 
             return userDeck;
         }
 
+        // Erhalte Karten vom User, die in seinem Deck sind
         public List<Card> GetCardsByUserIdAndDeckStatus(int userId, bool isInDeck)
         {
             List<Card> userCards = new List<Card>();
@@ -393,17 +379,13 @@ namespace MTCG.Repositories
                     {
                         while (reader.Read())
                         {
-                            // Lese die Daten für jede Karte aus der Datenbank
                             int cardID = Convert.ToInt32(reader["card_id"]);
                             string name = reader["name"].ToString();
                             ERegion region = (ERegion)Enum.Parse(typeof(ERegion), reader["region"].ToString());
                             int damage = Convert.ToInt32(reader["damage"]);
                             string cardType = reader["card_type"].ToString();
-                            //bool isUsed = Convert.ToBoolean(reader["is_used"]);
-                            //bool isInDeckValue = Convert.ToBoolean(reader["is_in_deck"]);
                             int owner_id = Convert.ToInt32(reader["owner_id"]);
 
-                            // Erstelle ein Card-Objekt
                             Card card;
 
                             if (cardType.Equals("Champion"))
@@ -429,7 +411,6 @@ namespace MTCG.Repositories
                                 throw new NotImplementedException();
                             }
 
-                            // Setze die Karten-ID und füge sie zur Liste hinzu
                             card.Id = cardID;
                             card.OwnerID = owner_id;
                             card.IsUsed = true;
@@ -450,37 +431,32 @@ namespace MTCG.Repositories
         {
             UserRepository userRepository = new UserRepository();
 
-            // Überprüfe die Autorisierung und erhalte den Benutzer
             User user = userRepository.GetUserByToken(token);
 
             if (user == null)
             {
-                // Benutzer nicht gefunden
                 Console.WriteLine("Benutzer nicht gefunden.");
                 return false;
             }
 
-            // Überprüfe, ob die Anzahl der ausgewählten Karten für das Deck korrekt ist (z.B., 4 Karten)
             if (selectedCardIds.Count != 4)
             {
                 Console.WriteLine("Es müssen genau 4 Karten ausgewählt werden.");
-                return false; // oder eine angemessene Fehlerbehandlung
+                return false;
             }
 
-            // Überprüfe, ob alle ausgewählten Karten dem Benutzer gehören
+            // Überprüfe ob alle ausgewählten Karten dem User gehören
             List<Card> userCards = GetCardsByUserIdAndDeckStatus(user.Id, false);
 
             foreach (int cardId in selectedCardIds)
             {
                 if (userCards.All(card => card.Id != cardId))
                 {
-                    // Der Benutzer gehört nicht alle ausgewählten Karten
                     Console.WriteLine("Nicht alle ausgewählten Karten gehören dem Benutzer.");
                     return false;
                 }
             }
 
-            // Setze die ausgewählten Karten als Deck für den Benutzer
             if (!SetCardsInDeck(user.Id, selectedCardIds))
             {
                 Console.WriteLine("Fehler beim Aktualisieren des Decks in der Datenbank.");
@@ -491,13 +467,13 @@ namespace MTCG.Repositories
             return true;
         }
 
+        // Aktualisiere die Karten eines Decks in der DB
         public bool SetCardsInDeck(int userId, List<int> cardIds)
         {
             using (NpgsqlConnection connection = _dbHandler.GetConnection())
             {
                 _dbHandler.OpenConnection(connection);
 
-                // Setze die "is_in_deck"-Eigenschaft für die ausgewählten Karten auf true
                 string query = $"UPDATE mtcg_cards SET is_in_deck = true WHERE owner_id = @userId AND card_id = ANY(@cardIds)";
 
                 using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
@@ -511,6 +487,7 @@ namespace MTCG.Repositories
                         _dbHandler.CloseConnection(connection);
                         return true;
                     }
+
                     catch (Exception ex)
                     {
                         Console.WriteLine($"Fehler beim Aktualisieren des Decks in der Datenbank: {ex.Message}");

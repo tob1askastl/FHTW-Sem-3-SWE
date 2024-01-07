@@ -2,8 +2,5 @@
 
 namespace MTCG
 {
-    public class Champion : Card
-    {
-
-    }
+    public class Champion : Card { }
 }

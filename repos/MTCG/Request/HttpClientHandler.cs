@@ -51,49 +51,47 @@ namespace MTCG.Request
             string method = requestLine[0];
             string path = requestLine[1];
 
-            // Curl 1 Registration
+            // Curl 1 - Registration
             if (method == "POST" && path == "/users")
             {
                 HandleRegistration(requestLines);
             }
 
-            // Curl 2 Login
+            // Curl 2 - Login
             else if (method == "POST" && path == "/sessions")
             {
                 HandleLogin(requestLines);
             }
 
-            // CURL 3 Create Packages
+            // CURL 3 - Create Packages
             else if (method == "POST" && path == "/packages")
             {
                 HandlePackage(requestLines);
             }
 
-            // CURL 4 - 7 Buy Packages / Not enough Money / No more cards
+            // CURL 4 bis 7 - Buy Packages / Not enough Money / No more cards
             else if (method == "POST" && path == "/transactions/packages")
             {
                 HandleBuyAndOpenPackages(requestLines);
             }
 
-            // CURL 8, 9 View all Cards from user
+            // CURL 8, 9 - View all Cards from user
             else if (method == "GET" && path == "/cards")
             {
                 ShowAllCardsFromUser(requestLines);
             }
 
-            // CURL 11, 12 Configure Deck and Show
+            // CURL 11, 12 - Configure Deck and Show
             else if (method == "PUT" && path == "/deck")
             {
                 HandleConfigureDeck(requestLines);
             }
 
-            // CURL 10, 13 Different Outputstyle
+            // CURL 10, 13 - Different Outputstyle
             else if (method == "GET" && path.StartsWith("/deck"))
             {
-                // Überprüfe, ob der Query-Parameter ?format=plain vorhanden ist
-                bool isPlainText = path.Contains("format=plain");
-
-                if (isPlainText)
+                // 2 Varianten im Curl: "/deck" und "/deck?format=plain"
+                if (path.Contains("format=plain"))
                 {
                     ShowDeckInPlainText(requestLines);
                 }
@@ -104,52 +102,34 @@ namespace MTCG.Request
                 }
             }
 
-            // CURL 14 Show User Data
+            // CURL 14 - Show User Data
             else if (method == "GET" && path.StartsWith("/users/"))
             {
                 ShowUserData(requestLines);
             }
 
-            // CURL 14 Edit User Data
+            // CURL 14 - Edit User Data
             else if (method == "PUT" && path.StartsWith("/users/"))
             {
                 HandleEditUserData(requestLines);
             }
 
-
-            // CURL 15 Stats (single User info)
+            // CURL 15 - Stats (single User info)
             else if (method == "GET" && path == "/stats")
             {
                 HandleViewStats(requestLines);
             }
 
-            // CURL 16 Scoreboard (all users info)
+            // CURL 16 - Scoreboard (all users info)
             else if (method == "GET" && path == "/scoreboard")
             {
                 HandleViewScoreboard(requestLines);
             }
 
-            // CURL 17 Battle
+            // CURL 17 - Battle
             else if (method == "POST" && path == "/battles")
             {
-                string authorizationHeader = requestLines.FirstOrDefault(line => line.StartsWith("Authorization:"));
-                string token = authorizationHeader?.Replace("Authorization: Bearer ", "").Trim();
-
-                // Überprüfe die Autorisierung und hole den Benutzer aus der Datenbank
-                if (string.IsNullOrEmpty(token) || !userRepository.ValidateToken(token))
-                {
-                    // Autorisierung fehlgeschlagen
-                    string response = "HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\n\r\nUnauthorized\r\n";
-                    client.Send(Encoding.ASCII.GetBytes(response));
-                    return;
-                }
-
-                // Der Spieler startet den Kampf
-                battleManager.StartBattle(token);
-
-                // Hier kannst du eine Bestätigung oder andere Logik hinzufügen
-                string battleResponse = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nBattle started\r\n";
-                client.Send(Encoding.ASCII.GetBytes(battleResponse));
+                HandleStartBattle(requestLines);
             }
 
             client.Close();
@@ -170,16 +150,14 @@ namespace MTCG.Request
             // Registration erfolgreich
             if (userRepository.AddUser(newUser, out string responseMessage))
             {
-                Console.WriteLine($"Registration erfolgreich für Benutzer '{newUser.Username}'.");
-
+                Console.WriteLine($"Registration erfolgreich für User '{newUser.Username}'.");
                 response = "HTTP/1.1 201 OK\r\nContent-Type: text/plain\r\n\r\nUser successfully created\r\n";
             }
 
             // Registration fehlgeschlagen
             else
             {
-                Console.WriteLine($"Registration fehlgeschlagen für Benutzer '{newUser.Username}': {responseMessage}");
-
+                Console.WriteLine($"Registration fehlgeschlagen für User '{newUser.Username}': {responseMessage}");
                 response = "HTTP/1.1 409 Conflict\r\nContent-Type: text/plain\r\n\r\nUser with same username already registered\r\n";
                 client.Send(Encoding.ASCII.GetBytes(response));
                 return;
@@ -205,7 +183,7 @@ namespace MTCG.Request
                 string token = GenerateToken(username);
                 HttpServer.Server.userTokens.TryAdd(token, user.Id);
 
-                Console.WriteLine($"Anmeldung erfolgreich für Benutzer '{username}'.");
+                Console.WriteLine($"Anmeldung erfolgreich für User '{username}'.");
                 string response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nUser login successful\r\n";
                 client.Send(Encoding.ASCII.GetBytes(response));
             }
@@ -213,19 +191,13 @@ namespace MTCG.Request
             // Anmeldung fehlgeschlagen
             else
             {
-                Console.WriteLine($"Anmeldung fehlgeschlagen für Benutzer '{username}'.");
+                Console.WriteLine($"Anmeldung fehlgeschlagen für User '{username}'.");
                 string response = "HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\n\r\nInvalid username/password provided\r\n";
                 client.Send(Encoding.ASCII.GetBytes(response));
             }
-
-            /*
-            foreach (string usertoken in HttpServer.Server.TokensLoggedInUsers)
-            {
-                Console.WriteLine(usertoken);
-            }
-            */
         }
 
+        // Generiere einen Token basierend auf dem Username
         private string GenerateToken(string username)
         {
             return $"{username}-mtcgToken";
@@ -235,8 +207,11 @@ namespace MTCG.Request
         {
             string response;
             string requestBody = requestLines[requestLines.Length - 1].Trim();
+            
+            // Output der Json-Pakete
             Console.WriteLine(requestBody);
 
+            // Typinformationen in Json "deaktiveren"
             var settings = new JsonSerializerSettings
             {
                 TypeNameHandling = TypeNameHandling.None
@@ -246,6 +221,7 @@ namespace MTCG.Request
 
             foreach (JObject jsonObject in jsonArray)
             {
+                // Card_Type aus Json extrahieren
                 if (jsonObject.TryGetValue("card_type", StringComparison.OrdinalIgnoreCase, out JToken typeToken))
                 {
                     string cardType = typeToken.ToString();
@@ -267,6 +243,7 @@ namespace MTCG.Request
                     }
                 }
 
+                // Fehler beim Extrahieren des Card_Types
                 else
                 {
                     response = "HTTP/1.1 409 Conflict\r\nContent-Type: text/plain\r\n\r\nCardType does not exist\r\n";
@@ -281,76 +258,62 @@ namespace MTCG.Request
 
         private void HandleBuyAndOpenPackages(string[] requestLines)
         {
-            // Überprüfe die Autorisierung
             string authorizationHeader = requestLines.FirstOrDefault(line => line.StartsWith("Authorization:"));
             string token = authorizationHeader?.Replace("Authorization: Bearer ", "").Trim();
             string response;
 
             if (string.IsNullOrEmpty(token) || !userRepository.ValidateToken(token))
             {
-                // Autorisierung fehlgeschlagen
                 response = "HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\n\r\nUnauthorized\r\n";
                 client.Send(Encoding.ASCII.GetBytes(response));
                 return;
             }
 
-            // Überprüfe, ob der Benutzer genügend Geld hat
             if (!userRepository.HasEnoughMoneyForPackage(token))
             {
-                // Benutzer hat nicht genug Geld
                 response = "HTTP/1.1 403 Forbidden\r\nContent-Type: text/plain\r\n\r\nNot enough money for buying a card package\r\n";
                 client.Send(Encoding.ASCII.GetBytes(response));
                 return;
             }
 
-            // Kaufe und öffne das Paket
             List<Card> boughtCards = cardRepository.BuyAndOpenPackage(token);
 
-            // Überprüfe, ob Karten gekauft und geöffnet wurden
+            // Keine verfügbaren Karten mehr
             if (boughtCards == null || boughtCards.Count == 0)
             {
-                // Keine verfügbaren Karten mehr
                 response = "HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\n\r\nNo Packages left\r\n";
                 client.Send(Encoding.ASCII.GetBytes(response));
                 return;
             }
 
-            // Handle die Rückgabe (z.B., sende eine Liste der erhaltenen Karten als JSON)
-            //string jsonResponse = JsonConvert.SerializeObject(boughtCards);
             response = $"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\nA package has been successfully bought\r\n";
             client.Send(Encoding.ASCII.GetBytes(response));
         }
 
         private void ShowAllCardsFromUser(string[] requestLines)
         {
-            // Überprüfe die Autorisierung
             string authorizationHeader = requestLines.FirstOrDefault(line => line.StartsWith("Authorization:"));
             string token = authorizationHeader?.Replace("Authorization: Bearer ", "").Trim();
             string response;
 
             if (string.IsNullOrEmpty(token) || !userRepository.ValidateToken(token))
             {
-                // Autorisierung fehlgeschlagen
                 response = "HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\n\r\nUnauthorized\r\n";
                 client.Send(Encoding.ASCII.GetBytes(response));
                 return;
             }
 
-            // Hole den Benutzer aus der Datenbank
             User user = userRepository.GetUserByToken(token);
 
             if (user == null)
             {
-                // Benutzer nicht gefunden
                 response = "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\r\nUser not found\r\n";
                 client.Send(Encoding.ASCII.GetBytes(response));
                 return;
             }
 
-            // Hole alle Karten des Benutzers aus der Datenbank
             List<Card> userCards = cardRepository.GetCardsByUserId(user.Id);
 
-            // Handle die Rückgabe (z.B., sende die Liste der Karten als JSON)
             string jsonResponse = JsonConvert.SerializeObject(userCards);
             response = $"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n{jsonResponse}\r\n";
             client.Send(Encoding.ASCII.GetBytes(response));
@@ -358,26 +321,22 @@ namespace MTCG.Request
 
         private void ShowDeck(string[] requestLines)
         {
-            // Überprüfe die Autorisierung
             string authorizationHeader = requestLines.FirstOrDefault(line => line.StartsWith("Authorization:"));
             string token = authorizationHeader?.Replace("Authorization: Bearer ", "").Trim();
             string response;
 
             if (string.IsNullOrEmpty(token) || !userRepository.ValidateToken(token))
             {
-                // Autorisierung fehlgeschlagen
                 response = "HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\n\r\nUnauthorized\r\n";
                 client.Send(Encoding.ASCII.GetBytes(response));
                 return;
             }
 
-            // Hole die Karten des Benutzers für das Deck aus der Datenbank
             List<Card> userDeck = cardRepository.GetDeck(token);
 
-            // Handle die Rückgabe basierend auf dem Zustand des Decks
             if (userDeck == null || !userDeck.Any())
             {
-                // Keine Karten ausgewählt
+                // Noch keine Karten fürs Deck ausgewählt
                 response = "HTTP/1.1 204 OK\r\nContent-Type: text/plain\r\n\r\nThe request was fine, but the deck doesn't have any cards\r\n";
             }
 
@@ -393,30 +352,25 @@ namespace MTCG.Request
 
         private void ShowDeckInPlainText(string[] requestLines)
         {
-            // Überprüfe die Autorisierung
             string authorizationHeader = requestLines.FirstOrDefault(line => line.StartsWith("Authorization:"));
             string token = authorizationHeader?.Replace("Authorization: Bearer ", "").Trim();
             string response;
 
             if (string.IsNullOrEmpty(token) || !userRepository.ValidateToken(token))
             {
-                // Autorisierung fehlgeschlagen
                 response = "HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\n\r\nUnauthorized\r\n";
                 client.Send(Encoding.ASCII.GetBytes(response));
                 return;
             }
 
-            // Hole die Karten des Benutzers für das Deck aus der Datenbank
             List<Card> userDeck = cardRepository.GetDeck(token);
 
-            // Handle die Rückgabe basierend auf dem Zustand des Decks
             if (userDeck == null || !userDeck.Any())
             {
-                // Keine Karten ausgewählt
                 response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nDeck ist noch leer\r\n";
+                client.Send(Encoding.ASCII.GetBytes(response));
             }
 
-            // Erstelle den Text für jedes Kartenobjekt
             StringBuilder deckText = new StringBuilder();
 
             foreach (Card card in userDeck)
@@ -424,7 +378,6 @@ namespace MTCG.Request
                 deckText.AppendLine(card.ToString());
             }
 
-            // Sende den erstellten Text als Antwort
             response = $"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\n{deckText}\r\n";
             client.Send(Encoding.ASCII.GetBytes(response));
         }
@@ -442,11 +395,10 @@ namespace MTCG.Request
                 return;
             }
 
-            // Extrahiere die ausgewählten Karten aus dem Anfragekörper
+            // Daten aus Request extrahieren
             string requestBody = requestLines[requestLines.Length - 1];
             List<int> selectedCardIds = JsonConvert.DeserializeObject<List<int>>(requestBody);
 
-            // Konfiguriere das Deck des Benutzers und handle die Rückgabe
             if (cardRepository.ConfigureDeck(token, selectedCardIds))
             {
                 response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nThe deck has been successfully configured\r\n";
@@ -462,29 +414,26 @@ namespace MTCG.Request
 
         private void ShowUserData(string[] requestLines)
         {
-            // Überprüfe die Autorisierung und hole den Benutzernamen aus dem Pfad
             string authorizationHeader = requestLines.FirstOrDefault(line => line.StartsWith("Authorization:"));
             string token = authorizationHeader?.Replace("Authorization: Bearer ", "").Trim();
+
+            // Username aus Request auslesen
             string userName = GetUserNameFromPath(requestLines[0]);
 
             string response;
 
             if (string.IsNullOrEmpty(token) || !userRepository.ValidateToken(token))
             {
-                // Autorisierung fehlgeschlagen
                 response = "HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\n\r\nUnauthorized\r\n";
                 client.Send(Encoding.ASCII.GetBytes(response));
                 return;
             }
 
-            Console.WriteLine(userName);
-
-            // Hole den Benutzer aus der Datenbank
             User user = userRepository.GetUserByToken(token);
 
+            // User nicht gefunden oder falscher Username im Pfad
             if (user == null || !user.Username.Equals(userName, StringComparison.OrdinalIgnoreCase))
             {
-                // Benutzer nicht gefunden oder falscher Benutzername im Pfad
                 response = "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\r\nUser not found\r\n";
                 client.Send(Encoding.ASCII.GetBytes(response));
                 return;
@@ -497,70 +446,70 @@ namespace MTCG.Request
 
         private void HandleEditUserData(string[] requestLines)
         {
-            // Überprüfe die Autorisierung und hole den Benutzernamen aus dem Pfad
             string authorizationHeader = requestLines.FirstOrDefault(line => line.StartsWith("Authorization:"));
             string token = authorizationHeader?.Replace("Authorization: Bearer ", "").Trim();
+
+            // Username aus Request auslesen
             string userName = GetUserNameFromPath(requestLines[0]);
 
             string response;
 
             if (string.IsNullOrEmpty(token) || !userRepository.ValidateToken(token))
             {
-                // Autorisierung fehlgeschlagen
                 response = "HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\n\r\nUnauthorized\r\n";
                 client.Send(Encoding.ASCII.GetBytes(response));
                 return;
             }
 
-            // Hole den Benutzer aus der Datenbank
             User user = userRepository.GetUserByToken(token);
 
+            // User nicht gefunden oder falscher Username im Pfad
             if (user == null || !user.Username.Equals(userName, StringComparison.OrdinalIgnoreCase))
             {
-                // Benutzer nicht gefunden oder falscher Benutzername im Pfad
                 response = "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\r\nUser not found\r\n";
                 client.Send(Encoding.ASCII.GetBytes(response));
                 return;
             }
 
-            // Hole den JSON-Body der Anfrage und deserialisiere ihn in ein User-Objekt
             string requestBody = GetRequestBody(requestLines);
 
             User updatedUser = JsonConvert.DeserializeObject<User>(requestBody);
 
             if (updatedUser == null)
             {
-                // Fehler beim Deserialisieren des JSON-Bodys
                 response = "HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\n\r\nInvalid JSON data\r\n";
                 client.Send(Encoding.ASCII.GetBytes(response));
                 return;
             }
 
-            // Aktualisiere die Benutzerdaten
+            // Aktualisiere die Userdaten
             user.SetUsername(updatedUser.Username);
             user.SetBio(updatedUser.Bio);
             user.SetImage(updatedUser.Image);
 
-            // Speichere die aktualisierten Benutzerdaten in der Datenbank
+            // Speichere die aktualisierten Userdaten in der Datenbank
             userRepository.EditUser(user);
 
-            // Sende die Bestätigung als Antwort
             response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nUser sucessfully updated\r\n";
             client.Send(Encoding.ASCII.GetBytes(response));
         }
 
+        // Extrahiere Username aus Pfad, zB /users/kienboec
         private string GetUserNameFromPath(string path)
         {
-            // Extrahiere den Benutzernamen aus dem Pfad, z.B., /users/kienboec
+            // In Segmente aufteilen ("/" als Trennzeichen)
             string[] segments = path.Split('/');
             
+            // Mindestens drei Segmente, Username befindet sich bei Index 2, Leerzeichen removed
             return segments.Length >= 3 ? segments[2].Split(' ')[0].Trim() : null;
         }
 
+        // Extrahiere JSON-Body aus den Anforderungslinien
         private string GetRequestBody(string[] requestLines)
         {
-            // Extrahiere den JSON-Body aus den Anforderungslinien
+            // Index der ersten Zeile suchen
             int bodyIndex = Array.IndexOf(requestLines, requestLines.First(line => line.StartsWith("{")));
+
             return bodyIndex >= 0 ? string.Join(Environment.NewLine, requestLines.Skip(bodyIndex)) : null;
         }
 
@@ -571,7 +520,6 @@ namespace MTCG.Request
             string username = GetUsernameFromToken(token);
             string response;
 
-            // Hole den Benutzer aus der Datenbank
             User user = userRepository.GetUserByToken(token);
 
             if (user != null)
@@ -589,9 +537,9 @@ namespace MTCG.Request
             }
         }
 
+        // Extrahiere Username aus Token
         private string GetUsernameFromToken(string token)
         {
-            // Extrahiere den Benutzernamen aus dem Token
             return token?.Split('-')[0];
         }
 
@@ -601,36 +549,50 @@ namespace MTCG.Request
             string token = authorizationHeader?.Replace("Authorization: Bearer ", "").Trim();
             string response;
 
-            // Überprüfe die Autorisierung und hole den Benutzer aus der Datenbank
             if (string.IsNullOrEmpty(token) || !userRepository.ValidateToken(token))
             {
-                // Autorisierung fehlgeschlagen
                 response = "HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\n\r\nUnauthorized\r\n";
                 client.Send(Encoding.ASCII.GetBytes(response));
                 return;
             }
 
-            // Hole alle Benutzer aus der Datenbank
+            // Alle User auslesen
             List<User> allUsers = userRepository.GetAllUsers();
 
             if (allUsers != null && allUsers.Count > 0)
             {
-                // Erstelle eine Liste von JSON-Strings für die Statistiken aller Benutzer
+                // Liste für Statistiken aller User
                 List<string> userStatsJson = allUsers.Select(u => u.PrintStats()).ToList();
 
-                // Kombiniere die JSON-Strings zu einer einzelnen Antwort
                 string jsonResponse = string.Join(Environment.NewLine, userStatsJson);
 
-                // Sende die Antwort
                 response = $"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n{jsonResponse}\r\n";
                 client.Send(Encoding.ASCII.GetBytes(response));
             }
+
             else
             {
-                // Keine Benutzer gefunden
                 response = "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\r\nNo users found\r\n";
                 client.Send(Encoding.ASCII.GetBytes(response));
             }
+        }
+
+        private void HandleStartBattle(string[] requestLines)
+        {
+            string authorizationHeader = requestLines.FirstOrDefault(line => line.StartsWith("Authorization:"));
+            string token = authorizationHeader?.Replace("Authorization: Bearer ", "").Trim();
+
+            if (string.IsNullOrEmpty(token) || !userRepository.ValidateToken(token))
+            {
+                string response = "HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\n\r\nUnauthorized\r\n";
+                client.Send(Encoding.ASCII.GetBytes(response));
+                return;
+            }
+
+            battleManager.StartBattle(token);
+
+            string battleResponse = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nBattle started\r\n";
+            client.Send(Encoding.ASCII.GetBytes(battleResponse));
         }
     }
 }
