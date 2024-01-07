@@ -11,12 +11,10 @@ namespace MTCG.Repositories
     public class CardRepository
     {
         private readonly DbHandler _dbHandler;
-        private readonly UserRepository userRepository;
 
         public CardRepository()
         {
             _dbHandler = new DbHandler();
-            userRepository = new UserRepository();
         }
 
         public void AddCard(Card card)
@@ -148,6 +146,8 @@ namespace MTCG.Repositories
                 Console.WriteLine("Keine Karten mehr verfuegbar");
                 return null; // Oder eine leere Liste oder eine andere Kennzeichnung für das Fehlschlagen
             }
+
+            UserRepository userRepository = new UserRepository();
 
             // Hole den Benutzer aus der Datenbank
             User user = userRepository.GetUserByToken(token);
@@ -359,6 +359,8 @@ namespace MTCG.Repositories
 
         public List<Card> GetDeck(string token)
         {
+            UserRepository userRepository = new UserRepository();
+
             User user = userRepository.GetUserByToken(token);
 
             if (user == null)
@@ -446,6 +448,8 @@ namespace MTCG.Repositories
 
         public bool ConfigureDeck(string token, List<int> selectedCardIds)
         {
+            UserRepository userRepository = new UserRepository();
+
             // Überprüfe die Autorisierung und erhalte den Benutzer
             User user = userRepository.GetUserByToken(token);
 

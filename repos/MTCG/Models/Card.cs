@@ -7,9 +7,6 @@ using System.Threading.Tasks;
 
 namespace MTCG
 {
-    // Piltover countert Shadow Isles wegen Highminded-Technologie
-    // Shadow Isles countert Bandle City wegen Ehrfurcht
-    // Bandle City countert Piltover wegen Winzigkeit von Yordles
     public enum ERegion { SHADOWISLES = 0, BANDLECITY = 1, PILTOVER = 2 };
     public abstract class Card
     {
@@ -18,7 +15,7 @@ namespace MTCG
         public ERegion Region { get; set; }
         public int Damage { get; set; }
 
-        [JsonProperty("card_type")] // This attribute maps the JSON key to the property
+        [JsonProperty("card_type")]
         public string CardType { get; set; }
         public bool IsUsed { get; set; } = false;
         public int OwnerID { get; set; } = -1;

@@ -13,7 +13,7 @@ namespace MTCG
 
         // Währung für Cards
         public int RitoPoints { get; set; } = 20;
-        public int EloPoints { get; set; } = 500;
+        public int EloPoints { get; set; } = 100;
         public int Victories { get; set; } = 0;
         public int Defeats { get; set; } = 0;
         public int Draws { get; set; } = 0;
@@ -27,10 +27,6 @@ namespace MTCG
             {
                 RitoPoints -= amount;
             }
-            else
-            {
-                throw new InvalidOperationException("Ungültiger Betrag für die Verringerung der RitoPoints.");
-            }
         }
 
         public string PrintStats()
@@ -39,7 +35,8 @@ namespace MTCG
             sb.Append(Username).Append(" | EloPoints: ").Append(EloPoints)
                 .Append(" | Victories: ").Append(Victories)
                 .Append(" | Defeats: ").Append(Defeats)
-                .Append(" | Draws: ").Append(Draws);
+                .Append(" | Draws: ").Append(Draws)
+                .Append(" | Count of Games: ").Append(Victories + Defeats + Draws);
 
             return sb.ToString();
         }

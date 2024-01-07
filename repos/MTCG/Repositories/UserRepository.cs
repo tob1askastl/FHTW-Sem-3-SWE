@@ -15,12 +15,10 @@ namespace MTCG.Repositories
     public class UserRepository
     {
         private readonly DbHandler _dbHandler;
-        private readonly CardRepository cardRepository;
 
         public UserRepository()
         {
             _dbHandler = new DbHandler();
-            cardRepository = new CardRepository();
         }
 
         // Füge einen User zur Datenbank mtcg_users hinzu
@@ -266,7 +264,7 @@ namespace MTCG.Repositories
             {
                 _dbHandler.OpenConnection(connection);
 
-                string query = "SELECT * FROM mtcg_users";
+                string query = "SELECT * FROM mtcg_users ORDER BY elopoints DESC";
 
                 using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
                 {

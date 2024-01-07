@@ -1,8 +1,10 @@
-﻿using MTCG.Repositories;
+﻿using Microsoft.Extensions.Logging;
+using MTCG.Repositories;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -27,7 +29,7 @@ namespace MTCG.Models
 
         public void Start()
         {
-            BattleLog.Add($"{User1.Username} vs {User2.Username}");
+            BattleLog.Add($"--- {User1.Username} vs {User2.Username} ---");
             rounds = 1;
 
             while (!IsBattleOver())
@@ -35,40 +37,26 @@ namespace MTCG.Models
                 ExecuteRound();
             }
 
-            Console.WriteLine("game is over");
+            Console.WriteLine("--- GG ---");
+            BattleLog.Add("--- GG ---");
 
             EndBattle();
         }
 
-        private void ExecuteRound()
+        public void ExecuteRound()
         {
             Console.WriteLine("--- Round {0} ---", rounds);
 
             Card cardUser1 = GetRandomCard(User1.Deck);
             Card cardUser2 = GetRandomCard(User2.Deck);
 
-            Console.WriteLine("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
-            Console.WriteLine("cnt u1: {0} ({1})", User1.Deck.Count, User1.Username);
-            Console.WriteLine("cnt u2: {0} ({1})", User2.Deck.Count, User2.Username);
-            Console.WriteLine("rdmcard u1:" + cardUser1.ToString());
-            Console.WriteLine("rdmcard u2:" + cardUser2.ToString());
-
-            // Überprüfe, ob beide Spieler eine Karte gezogen haben
             if (cardUser1 != null && cardUser2 != null)
             {
-                /*
-                // Führe die Schadensberechnung durch
-                int damageUser1 = CalculateDamage(cardUser1, cardUser2);
-                int damageUser2 = CalculateDamage(cardUser2, cardUser1);
-                */
-
                 int damageUser1 = cardUser1.Damage;
                 int damageUser2 = cardUser2.Damage;
 
-                // Logge die Ergebnisse der Runde
                 BattleLog.Add($"{User1.Username}'s {cardUser1.Name} ({cardUser1.Damage} Damage) vs {User2.Username}'s {cardUser2.Name} ({cardUser2.Damage} Damage)");
 
-                // Überprüfe den Schaden und handle die Karten entsprechend
                 if (damageUser1 > damageUser2)
                 {
                     Console.WriteLine($"{User1.Username} wins the round!");
@@ -87,48 +75,63 @@ namespace MTCG.Models
                 {
                     Console.WriteLine("Draw in the round!");
                     BattleLog.Add("Draw in the round!");
-                    // Bei einem Unentschieden passiert nichts
                 }
+
+                CheckRedemption(User1);
+                CheckRedemption(User2);
             }
 
             rounds++;
         }
 
-        // Füge die Methode CalculateDamage im BattleManager hinzu
-        private int CalculateDamage(Card attacker, Card defender)
+        public void CheckRedemption(User user)
         {
-            // Führe hier die Logik für die Schadensberechnung basierend auf den Kartentypen durch
-            // Beispiel: Bei einem Monsterkampf ist der Schaden einfach der auf der Karte angegebene Wert
-            // Beachte die Elemente und Spezialfälle (Goblins, Wizzards, Knights, Kraken, FireElves)
-            return attacker.Damage;
+            if (user.Deck.Count == 1)
+            {
+                Random random = new Random();
+
+                if (random.Next(1, 101) <= 25)
+                {
+                    StealCardFromOpponent(user);
+                }
+
+                else
+                {
+                    BattleLog.Add("Redemption failed");
+                    Console.WriteLine("Redemption failed");
+                }
+            }
         }
 
-        // Füge die Methode MoveCardToDeck im BattleManager hinzu
-        private void MoveCardToDeck(User winner, User loser, Card card)
+        public void StealCardFromOpponent(User user)
         {
-            Console.WriteLine("Karte {0} wird zum Deck von {1} hinzugefügt", card.Name, winner.Username);
-            // Füge die gewonnene Karte zum Deck des Benutzers hinzu (während des Kampfes)
+            User opponent = (user == User1) ? User2 : User1;
+            Card stolenCard = GetRandomCard(opponent.Deck);
+
+            if (stolenCard != null)
+            {
+                Console.WriteLine($"{user.Username} triggered Redemption and stole the card {stolenCard.Name} from {opponent.Username}");
+                BattleLog.Add($"{user.Username} triggered Redemption and stole the card {stolenCard.Name} from {opponent.Username}");
+
+                MoveCardToDeck(user, opponent, stolenCard);
+            }
+        }
+
+        public void MoveCardToDeck(User winner, User loser, Card card)
+        {
+            Console.WriteLine($"Card {card.Name} gets added to {winner.Username}'s Deck");
+            BattleLog.Add($"Card {card.Name} gets added to {winner.Username}'s Deck\n");
+
+            // Verlierer gibt die Karte an den Gewinner ab
             loser.Deck.Remove(card);
             winner.Deck.Add(card);
-
-            Console.WriteLine("Karten von {0}", loser.Username);
-            foreach (Card c in loser.Deck)
-            {
-                Console.WriteLine(c.Name);
-            }
-
-            Console.WriteLine("Karten von {0}", winner.Username);
-            foreach (Card b in winner.Deck)
-            {
-                Console.WriteLine(b.Name);
-            }
         }
 
-        private Card GetRandomCard(List<Card> deck)
+        public Card GetRandomCard(List<Card> deck)
         {
+            // Deck ist leer
             if (deck.Count == 0)
             {
-                // Deck ist leer, es gibt keine Karten mehr
                 return null;
             }
 
@@ -136,29 +139,23 @@ namespace MTCG.Models
             int randomIndex = random.Next(deck.Count);
 
             Card randomCard = deck[randomIndex];
-            //deck.RemoveAt(randomIndex);
 
             return randomCard;
         }
 
         public bool IsBattleOver()
         {
-            return (User1.Deck.Count == 0 || User2.Deck.Count == 0 || rounds >= MaxRounds);
+            return (User1.Deck.Count == 0 || User2.Deck.Count == 0 || rounds > MaxRounds);
         }
 
         public void EndBattle()
         {
-            if (rounds >= MaxRounds)
+            // Spieler 2 gewinnt
+            if (User1.Deck.Count == 0)
             {
-                // Unentschieden
-                User1.DrawGame();
-                User2.DrawGame();
-            }
+                Console.WriteLine($"{User2.Username} wins!");
+                BattleLog.Add($"{User2.Username} wins!\n");
 
-            else if (User1.Deck.Count == 0)
-            {
-                Console.WriteLine("spieler 2 gewinnt");
-                // Spieler 2 gewinnt
                 User1.LoseGame();
                 User2.WinGame();
 
@@ -166,10 +163,12 @@ namespace MTCG.Models
                 UpdateEloPoints(User2, User1);
             }
 
+            // Spieler 1 gewinnt
             else if (User2.Deck.Count == 0)
             {
-                Console.WriteLine("spieler 1 gewinnt");
-                // Spieler 1 gewinnt
+                Console.WriteLine($"{User1.Username} wins!");
+                BattleLog.Add($"{User1.Username} wins!\n");
+
                 User1.WinGame();
                 User2.LoseGame();
 
@@ -177,12 +176,18 @@ namespace MTCG.Models
                 UpdateEloPoints(User1, User2);
             }
 
+            // Unentschieden
             else
             {
-                // Maximale Rundenanzahl erreicht
+                Console.WriteLine("Draw!");
+                BattleLog.Add("Draw!\n");
+
                 User1.DrawGame();
                 User2.DrawGame();
             }
+
+            userRepository.EditStats(User1);
+            userRepository.EditStats(User2);
 
             Console.WriteLine("\n\nBATTLELOG\n");
             foreach (string line in BattleLog)
@@ -191,17 +196,21 @@ namespace MTCG.Models
             }
         }
 
-        private void UpdateEloPoints(User winner, User loser)
+        public void UpdateEloPoints(User winner, User loser)
         {
-            const int eloChange = 20;
+            // Further Features: elo value
+            winner.EloPoints += 3;
+            loser.EloPoints -= 5;
+        }
 
-            // Aktualisiere die Elo-Punkte basierend auf dem festgelegten Wert
-            winner.EloPoints += eloChange;
-            loser.EloPoints -= eloChange;
+        public int GetMaxRounds()
+        {
+            return MaxRounds;
+        }
 
-            // Aktualisiere die Elo-Punkte in der Datenbank für beide Benutzer
-            userRepository.EditStats(winner);
-            userRepository.EditStats(loser);
+        public int GetRounds()
+        {
+            return rounds;
         }
     }
 }

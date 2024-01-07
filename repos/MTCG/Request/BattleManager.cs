@@ -53,7 +53,7 @@ namespace MTCG.Request
             }
         }
 
-        private User GetRandomPlayer(int excludedUserId)
+        public User GetRandomPlayer(int excludedUserId)
         {
             // Hole einen zufälligen Spieler aus der Datenbank, der ein Deck hat und nicht der erste Spieler ist
             List<User> usersWithDecks = userRepository.GetUsersWithDecks();

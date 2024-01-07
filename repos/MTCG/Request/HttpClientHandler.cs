@@ -104,11 +104,13 @@ namespace MTCG.Request
                 }
             }
 
-            // CURL 14 Edit User Data
+            // CURL 14 Show User Data
             else if (method == "GET" && path.StartsWith("/users/"))
             {
                 ShowUserData(requestLines);
             }
+
+            // CURL 14 Edit User Data
             else if (method == "PUT" && path.StartsWith("/users/"))
             {
                 HandleEditUserData(requestLines);
@@ -169,7 +171,8 @@ namespace MTCG.Request
             if (userRepository.AddUser(newUser, out string responseMessage))
             {
                 Console.WriteLine($"Registration erfolgreich für Benutzer '{newUser.Username}'.");
-                response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nRegistration successful\r\n";
+
+                response = "HTTP/1.1 201 OK\r\nContent-Type: text/plain\r\n\r\nUser successfully created\r\n";
             }
 
             // Registration fehlgeschlagen
@@ -177,7 +180,7 @@ namespace MTCG.Request
             {
                 Console.WriteLine($"Registration fehlgeschlagen für Benutzer '{newUser.Username}': {responseMessage}");
 
-                response = "HTTP/1.1 409 Conflict\r\nContent-Type: text/plain\r\n\r\n" + responseMessage + "\r\n";
+                response = "HTTP/1.1 409 Conflict\r\nContent-Type: text/plain\r\n\r\nUser with same username already registered\r\n";
                 client.Send(Encoding.ASCII.GetBytes(response));
                 return;
             }
@@ -203,7 +206,7 @@ namespace MTCG.Request
                 HttpServer.Server.userTokens.TryAdd(token, user.Id);
 
                 Console.WriteLine($"Anmeldung erfolgreich für Benutzer '{username}'.");
-                string response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nLogin successful\r\n";
+                string response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nUser login successful\r\n";
                 client.Send(Encoding.ASCII.GetBytes(response));
             }
 
@@ -211,7 +214,7 @@ namespace MTCG.Request
             else
             {
                 Console.WriteLine($"Anmeldung fehlgeschlagen für Benutzer '{username}'.");
-                string response = "HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\n\r\nLogin failed\r\n";
+                string response = "HTTP/1.1 401 Unauthorized\r\nContent-Type: text/plain\r\n\r\nInvalid username/password provided\r\n";
                 client.Send(Encoding.ASCII.GetBytes(response));
             }
 
@@ -230,12 +233,13 @@ namespace MTCG.Request
 
         private void HandlePackage(string[] requestLines)
         {
+            string response;
             string requestBody = requestLines[requestLines.Length - 1].Trim();
             Console.WriteLine(requestBody);
 
             var settings = new JsonSerializerSettings
             {
-                TypeNameHandling = TypeNameHandling.None // Disable TypeNameHandling
+                TypeNameHandling = TypeNameHandling.None
             };
 
             JArray jsonArray = JArray.Parse(requestBody);
@@ -259,18 +263,19 @@ namespace MTCG.Request
                             break;
 
                         default:
-                            // Handle unknown card types or log an error
                             break;
                     }
                 }
+
                 else
                 {
-                    // Handle cases where "card_type" attribute is missing
-                    // You may want to log an error or handle it based on your application logic
+                    response = "HTTP/1.1 409 Conflict\r\nContent-Type: text/plain\r\n\r\nCardType does not exist\r\n";
+                    client.Send(Encoding.ASCII.GetBytes(response));
+                    return;
                 }
             }
 
-            string response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nSuccessfully created Package\r\n";
+            response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nSuccessfully created Package\r\n";
             client.Send(Encoding.ASCII.GetBytes(response));
         }
 
@@ -293,7 +298,7 @@ namespace MTCG.Request
             if (!userRepository.HasEnoughMoneyForPackage(token))
             {
                 // Benutzer hat nicht genug Geld
-                response = "HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\n\r\nNicht genuegend RitoPunkte\r\n";
+                response = "HTTP/1.1 403 Forbidden\r\nContent-Type: text/plain\r\n\r\nNot enough money for buying a card package\r\n";
                 client.Send(Encoding.ASCII.GetBytes(response));
                 return;
             }
@@ -305,14 +310,14 @@ namespace MTCG.Request
             if (boughtCards == null || boughtCards.Count == 0)
             {
                 // Keine verfügbaren Karten mehr
-                response = "HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\n\r\nKeine Karten mehr uebrig\r\n";
+                response = "HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\n\r\nNo Packages left\r\n";
                 client.Send(Encoding.ASCII.GetBytes(response));
                 return;
             }
 
             // Handle die Rückgabe (z.B., sende eine Liste der erhaltenen Karten als JSON)
             //string jsonResponse = JsonConvert.SerializeObject(boughtCards);
-            response = $"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\nGekauft und erhalten\r\n";
+            response = $"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\nA package has been successfully bought\r\n";
             client.Send(Encoding.ASCII.GetBytes(response));
         }
 
@@ -373,7 +378,7 @@ namespace MTCG.Request
             if (userDeck == null || !userDeck.Any())
             {
                 // Keine Karten ausgewählt
-                response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nDeck ist noch leer\r\n";
+                response = "HTTP/1.1 204 OK\r\nContent-Type: text/plain\r\n\r\nThe request was fine, but the deck doesn't have any cards\r\n";
             }
 
             else
@@ -444,12 +449,13 @@ namespace MTCG.Request
             // Konfiguriere das Deck des Benutzers und handle die Rückgabe
             if (cardRepository.ConfigureDeck(token, selectedCardIds))
             {
-                response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nDeck erfolgreich konfiguriert\r\n";
+                response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nThe deck has been successfully configured\r\n";
                 client.Send(Encoding.ASCII.GetBytes(response));
             }
+
             else
             {
-                response = "HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\n\r\nFehler beim Konfigurieren des Decks\r\n";
+                response = "HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\n\r\nError in configuring deck\r\n";
                 client.Send(Encoding.ASCII.GetBytes(response));
             }
         }
@@ -484,7 +490,6 @@ namespace MTCG.Request
                 return;
             }
 
-            // Handle die Rückgabe (z.B., sende die Benutzerdaten als JSON)
             string jsonResponse = JsonConvert.SerializeObject(user);
             response = $"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n{jsonResponse}\r\n";
             client.Send(Encoding.ASCII.GetBytes(response));
@@ -521,10 +526,6 @@ namespace MTCG.Request
             // Hole den JSON-Body der Anfrage und deserialisiere ihn in ein User-Objekt
             string requestBody = GetRequestBody(requestLines);
 
-            // In UpdatedUser sollen die übergebenen Json-Attribute stehen, die vom RequestBody übergeben werden
-
-            Console.WriteLine("body: " + requestBody);
-
             User updatedUser = JsonConvert.DeserializeObject<User>(requestBody);
 
             if (updatedUser == null)
@@ -544,7 +545,7 @@ namespace MTCG.Request
             userRepository.EditUser(user);
 
             // Sende die Bestätigung als Antwort
-            response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nUser data updated successfully\r\n";
+            response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nUser sucessfully updated\r\n";
             client.Send(Encoding.ASCII.GetBytes(response));
         }
 
