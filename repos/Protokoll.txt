@@ -1,0 +1,63 @@
+1) Technical Steps
+
+1.1) Design & Ablauf
+
+Der HttpServer hoert auf neue Http-Requesten, um diese zu bearbeiten. Fuer jeden Request wird ein neuer Thread erstellt. 
+Im Server werden Sockets am Localhost-Port 10001 erstellt. Der Client-Handler liest Anfragen vom Client, analysiert sie und 
+verarbeitet sie entsprechend ihrem Typ und Pfad. Bei Erfolg oder Misserfolg einer Aktion wird der dazugehoerige Http-Statuscode 
+und eine Meldung zurueckgegeben. Daten werden in einer Postgre-Datenbank gespeichert. Dort gibt es die Tabellen mtcg_users und mtcg_cards. 
+Die Karten-Tabelle hat einen Fremdschluessel "Owner_ID" auf die Id in der User-Tabelle. Der Datenbankzugriff wird in Repositories eingeteilt, 
+naemlich UserRepository und CardRepository. Ein User kann ein Battle starten; ein zweiter, zufaelliger User, welcher ebenfalls ein Kampf-Deck aus 4 Karten
+besitzt, wird aus der Datenbank ausgelesen. Nun werden jeweils eine Karte aus dem Deck gezogen und die Damage-Werte verglichen. Der Gewinner erhaelt die 
+Karte des Verlierers und die Karte wird dem Verlierer aus seinem Deck entfernt. Das Battle endet, wenn ein User keine Karten mehr besitzt oder ueber 100 
+Runden gespielt wurde.
+
+1.2) Failures
+
+Anfangs war geplant, eine Queue fuer das Battle zu erstellen. Hier sollte ein User der Queue beitreten und solange warten, bis ein zweiter User 
+der Queue beitritt. Erst dann sollte ein Kampf beginnen. Dies wurde aber schnell wieder verworfen und wie in 1.1 erwaehnt implementiert.
+
+1.3) Lessons Learned
+
+Es war sehr praktisch, bereits zu Beginn ein Curl-Skript zu haben, wonach man sich halbwegs mit der Impementierung richten konnte. 
+Ich habe alle Curl-Befehle nacheinander abgearbeitet und somit einen guten Plan gehabt. Allerdings haette man frueher anfangen 
+koennen - und nicht 4 Tage vor der Abgabe :^)
+
+1.4) Mandatory Special Feature
+
+Das Special-Feature im Kampf heisst "Redemption". Sollte ein User nach einem Spielzug nur mehr eine Karte besitzen, hat er eine Chance von
+25%, um dem Gegner eine zufaellige Karte zu stehlen. Mit etwas Glueck bringt das Nahezu-Verlierer eine Chance, ein Comeback zu starten.
+
+1.5) Nicht-Erfuellte Tasks
+
+Das Tauschen der Karten wurde nicht implementiert. Die besonderen Regeln, je nach Art der Karte, wurden ebenfalls missachtet.
+
+2) UnitTests
+
+2.1) BattleUnitTests
+
+Die verschiedenen Testmethoden pruefen verschiedene Aspekte des Battle-Managements. Zum Beispiel wird in TestExecuteRound_WinnerGetsCard ueberprueft, 
+ob ein Spieler erfolgreich eine Runde gewinnt und eine Karte vom Gegner erhaelt. Weitere Tests wie TestMoveCardToDeck und TestCheckRedemption_Successful 
+pruefen die korrekte Verschiebung von Karten zwischen Decks und den erfolgreichen Einsatz der Redemption-Funktion. Ebenfalls werden die Addition und Subtraktion
+bei Victories / Defeats getestet.
+
+2.2) UserUnitTests
+
+Hier werden die Funktionalitaeten rund um Rito-Punkte ueberprueft. Es wird geprueft, ob RitoPoints erfolgreich abgezogen werden; was passiert, wenn ein negativer oder
+kein Amount abgezogen wird oder was passiert, wenn man nicht genug Guthaben hat
+
+2.3) CardUnitTests
+
+In dieser UnitClass wird nur die Erstellung und Instanzierung von einer neuen Karte ueberprueft.
+
+3) Time Spent
+
+September bis Oktober: Grundlegende Projektbasis -> ~8h
+November: Datenbank & Test-Daten (TXT-File und StreamReader) -> ~15h
+03.01.2024: Klassen refactored -> 3h
+04.01.2024: Http-Server, ClientHandler, Repositories -> 6h
+05.01.2024: Curl 1 - 3, 4 in Progress -> ~14h 
+06.01.2024: Curls done, Battle done -> ~15h 
+07.01.2024: UnitTests done, Abgabe vorbereitet, Code refactored und aufgeraeumt -> 6h
+
+Overall: ~67 Stunden
