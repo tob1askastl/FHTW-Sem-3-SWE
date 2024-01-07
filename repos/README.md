@@ -4,8 +4,10 @@ Tobias Kastl, Semester 3 / A1, if22b007
 
 # Git-Repo
 
-https://github.com/tob1askastl/FHTW-Sem-3-SWE \n
-https://github.com/tob1askastl/FHTW-Sem-3-SWE/tree/main/repos/MTCG (Project-Directory)
+## Generell Repo
+https://github.com/tob1askastl/FHTW-Sem-3-SWE
+## Projekt-Directory
+https://github.com/tob1askastl/FHTW-Sem-3-SWE/tree/main/repos/MTCG
 
 # Information ueber Location der Dateien
 
