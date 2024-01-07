@@ -251,13 +251,19 @@ echo.
 pause
 
 REM --------------------------------------------------
-echo 17) battle - edit (scoreboard)
+echo 17) battle - edit (added GET stats)
 start /b "kienboec battle" curl -i -X POST http://localhost:10001/battles --header "Authorization: Bearer kienboec-mtcgToken"
 
-curl -i -X GET http://localhost:10001/scoreboard --header "Authorization: Bearer kienboec-mtcgToken"
+echo kienboec
+curl -i -X GET http://localhost:10001/stats --header "Authorization: Bearer kienboec-mtcgToken"
+echo.
+echo altenhof
+curl -i -X GET http://localhost:10001/stats --header "Authorization: Bearer altenhof-mtcgToken"
+echo.
+echo.
 
-::start /b "altenhof battle" curl -i -X POST http://localhost:10001/battles --header "Authorization: Bearer altenhof-mtcgToken"
-::ping localhost -n 10 >NUL 2>NUL
+start /b "altenhof battle" curl -i -X POST http://localhost:10001/battles --header "Authorization: Bearer altenhof-mtcgToken"
+ping localhost -n 10 >NUL 2>NUL
 
 pause
 

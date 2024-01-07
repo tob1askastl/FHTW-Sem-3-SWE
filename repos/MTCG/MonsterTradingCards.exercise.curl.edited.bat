@@ -209,10 +209,8 @@ curl -i -X GET http://localhost:10001/scoreboard --header "Authorization: Bearer
 echo.
 echo.
 
-pause
-
 REM --------------------------------------------------
-echo 17) battle - edit (scoreboard)
+echo 17) battle - edit (added GET stats)
 start /b "kienboec battle" curl -i -X POST http://localhost:10001/battles --header "Authorization: Bearer kienboec-mtcgToken"
 
 echo kienboec
@@ -226,8 +224,6 @@ echo.
 start /b "altenhof battle" curl -i -X POST http://localhost:10001/battles --header "Authorization: Bearer altenhof-mtcgToken"
 ping localhost -n 10 >NUL 2>NUL
 
-pause
-
 REM --------------------------------------------------
 echo 18) Stats 
 echo kienboec
@@ -238,15 +234,11 @@ curl -i -X GET http://localhost:10001/stats --header "Authorization: Bearer alte
 echo.
 echo.
 
-pause
-
 REM --------------------------------------------------
 echo 19) scoreboard
 curl -i -X GET http://localhost:10001/scoreboard --header "Authorization: Bearer kienboec-mtcgToken"
 echo.
 echo.
-
-pause
 
 REM --------------------------------------------------
 echo end...
