@@ -139,6 +139,7 @@ namespace MTCG.Request
         {
             string requestBody = requestLines[requestLines.Length - 1].Trim();
 
+            // Try-Catch
             JsonUserData userData = Newtonsoft.Json.JsonConvert.DeserializeObject<JsonUserData>(requestBody);
 
             string response;
